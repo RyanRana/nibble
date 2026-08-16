@@ -1,0 +1,194 @@
+{
+  "workload": {
+    "label": "Reference agentic platform",
+    "activeRuns": 2000000,
+    "turnsPerRun": 40,
+    "spansPerRun": 100,
+    "memories": 20000000,
+    "dedupIdsPerDay": 500000000,
+    "cacheEntries": 50000000,
+    "queueDepth": 2000000,
+    "indexMemberships": 100000000,
+    "metricSamples": 500000000
+  },
+  "lines": [
+    {
+      "component": "Agent run state",
+      "records": 2000000,
+      "naiveBytes": 2253.2762,
+      "optBytes": 146.7552,
+      "naiveName": "A · key-per-field",
+      "optName": "J · sharded HASH (128/shard, listpack)",
+      "naiveTotalBytes": 4506552400,
+      "optTotalBytes": 293510400,
+      "factor": 15.35
+    },
+    {
+      "component": "Conversation transcripts",
+      "records": 80000000,
+      "naiveBytes": 2060.38503125,
+      "optBytes": 594.52496875,
+      "naiveName": "A · LIST of JSON turns",
+      "optName": "E · LIST of per-turn dict-deflate",
+      "naiveTotalBytes": 164830802500,
+      "optTotalBytes": 47561997500,
+      "factor": 3.47
+    },
+    {
+      "component": "Tool-call spans",
+      "records": 200000000,
+      "naiveBytes": 346.21312,
+      "optBytes": 36.635733333333334,
+      "naiveName": "A · HASH per span",
+      "optName": "F · LIST of schema-packed spans",
+      "naiveTotalBytes": 69242624000,
+      "optTotalBytes": 7327146666.666667,
+      "factor": 9.45
+    },
+    {
+      "component": "Semantic memory (searchable)",
+      "records": 20000000,
+      "naiveBytes": 32814.542625,
+      "optBytes": 2291.708,
+      "naiveName": "A · STRING, JSON array",
+      "optName": "H · VECTOR SET, Q8 (default)",
+      "naiveTotalBytes": 656290852500,
+      "optTotalBytes": 45834160000,
+      "factor": 14.32
+    },
+    {
+      "component": "Idempotency / dedup",
+      "records": 500000000,
+      "naiveBytes": 54.081488,
+      "optBytes": 8.984554,
+      "naiveName": "A · SET of 36-char UUID strings",
+      "optName": "D · sharded SETs of int hashes (intset)",
+      "naiveTotalBytes": 27040744000,
+      "optTotalBytes": 4492277000,
+      "factor": 6.02
+    },
+    {
+      "component": "Tool-result cache",
+      "records": 50000000,
+      "naiveBytes": 276.52298,
+      "optBytes": 160.51996,
+      "naiveName": "A · STRING key + EXPIRE",
+      "optName": "F · sharded HASH + HEXPIRE + zstd values",
+      "naiveTotalBytes": 13826149000,
+      "optTotalBytes": 8025998000,
+      "factor": 1.72
+    },
+    {
+      "component": "Secondary indexes",
+      "records": 100000000,
+      "naiveBytes": 64.999968,
+      "optBytes": 4.427115,
+      "naiveName": "A · SET of UUID strings",
+      "optName": "D · sharded intsets of dense ids",
+      "naiveTotalBytes": 6499996800,
+      "optTotalBytes": 442711499.99999994,
+      "factor": 14.68
+    },
+    {
+      "component": "Task queue",
+      "records": 2000000,
+      "naiveBytes": 216.6338,
+      "optBytes": 55.25072,
+      "naiveName": "A · LIST of JSON tasks",
+      "optName": "C · LIST of schema-packed tasks",
+      "naiveTotalBytes": 433267600,
+      "optTotalBytes": 110501440,
+      "factor": 3.92
+    },
+    {
+      "component": "Telemetry",
+      "records": 500000000,
+      "naiveBytes": 88.645031,
+      "optBytes": 2.071104,
+      "naiveName": "A · ZSET, member \"ts:value\"",
+      "optName": "E · TIMESERIES, COMPRESSED (integer ms)",
+      "naiveTotalBytes": 44322515500,
+      "optTotalBytes": 1035552000,
+      "factor": 42.8
+    }
+  ],
+  "naiveTotalBytes": 986993504300,
+  "optTotalBytes": 115123854506.66666,
+  "overallFactor": 8.57,
+  "pricing": [
+    {
+      "sku": "ElastiCache Valkey r8g.16xlarge",
+      "perUsable": 10.84,
+      "naive": 9964,
+      "optimized": 1162,
+      "note": "cheapest RAM per GiB found; 25% reserved-memory-percent"
+    },
+    {
+      "sku": "ElastiCache Valkey r7g.xlarge",
+      "perUsable": 12.93,
+      "naive": 11888,
+      "optimized": 1387,
+      "note": "Valkey engine is exactly 20% cheaper than Redis OSS on ElastiCache"
+    },
+    {
+      "sku": "ElastiCache Redis OSS r7g.xlarge",
+      "perUsable": 16.16,
+      "naive": 14854,
+      "optimized": 1733,
+      "note": "same hardware, Redis engine; AWS ships r8g for Valkey only"
+    },
+    {
+      "sku": "GCP Memorystore highmem",
+      "perUsable": 13.5,
+      "naive": 12409,
+      "optimized": 1447,
+      "note": "AOF billed separately at ~$0.40/GB-month"
+    },
+    {
+      "sku": "Azure Managed Redis M2000",
+      "perUsable": 13.14,
+      "naive": 12076,
+      "optimized": 1409,
+      "note": "10% maxmemory-reserved + 10% fragmentation reserve"
+    },
+    {
+      "sku": "MemoryDB Valkey r7g.xlarge",
+      "perUsable": 15.97,
+      "naive": 14683,
+      "optimized": 1713,
+      "note": "durable by design (Multi-AZ transaction log); writes free to 10 TB/mo on Valkey"
+    },
+    {
+      "sku": "ElastiCache Valkey r6gd (SSD-tiered)",
+      "perUsable": 4.84,
+      "naive": 4449,
+      "optimized": 519,
+      "note": "~+300 µs on SSD hits; NOT combinable with synchronous durability"
+    },
+    {
+      "sku": "Redis Cloud Essentials Flex",
+      "perUsable": 5,
+      "naive": 4596,
+      "optimized": 536,
+      "note": "flat $5/GB 1–100 GB; ~6× lower throughput allowance than the RAM plans"
+    }
+  ],
+  "durabilityLadder": [
+    {
+      "label": "advertised RAM, naive arithmetic",
+      "monthly": 1040
+    },
+    {
+      "label": "after 25% reserved memory",
+      "monthly": 1387
+    },
+    {
+      "label": "+ 1 replica for HA",
+      "monthly": 2773
+    },
+    {
+      "label": "+ synchronous durability (+18%/node)",
+      "monthly": 3273
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "n": 4000,
+  "dim": 1536,
+  "k": 10,
+  "queries": 15,
+  "rows": [
+    {
+      "rank": 8,
+      "effectiveRank": 10.2,
+      "relativeContrast": 6.087,
+      "f16": 1,
+      "int8": 1,
+      "binary": 0.7933333333333333,
+      "rerank10": 1,
+      "rerank50": 1
+    },
+    {
+      "rank": 16,
+      "effectiveRank": 17,
+      "relativeContrast": 2.519,
+      "f16": 1,
+      "int8": 1,
+      "binary": 0.8333333333333334,
+      "rerank10": 1,
+      "rerank50": 1
+    },
+    {
+      "rank": 32,
+      "effectiveRank": 30.9,
+      "relativeContrast": 4.178,
+      "f16": 1,
+      "int8": 1,
+      "binary": 0.8,
+      "rerank10": 1,
+      "rerank50": 1
+    },
+    {
+      "rank": 64,
+      "effectiveRank": 57.3,
+      "relativeContrast": 3.799,
+      "f16": 1,
+      "int8": 0.9933333333333333,
+      "binary": 0.6733333333333333,
+      "rerank10": 0.9933333333333333,
+      "rerank50": 0.9933333333333333
+    },
+    {
+      "rank": 128,
+      "effectiveRank": 100,
+      "relativeContrast": 3.66,
+      "f16": 1,
+      "int8": 1,
+      "binary": 0.62,
+      "rerank10": 0.9866666666666667,
+      "rerank50": 1
+    },
+    {
+      "rank": 256,
+      "effectiveRank": 162.2,
+      "relativeContrast": 1.257,
+      "f16": 1,
+      "int8": 1,
+      "binary": 0.5066666666666667,
+      "rerank10": 0.9533333333333334,
+      "rerank50": 1
+    },
+    {
+      "rank": 768,
+      "effectiveRank": 277.6,
+      "relativeContrast": 5.063,
+      "f16": 1,
+      "int8": 0.9933333333333333,
+      "binary": 0.3466666666666667,
+      "rerank10": 0.7666666666666667,
+      "rerank50": 0.9733333333333334
+    },
+    {
+      "rank": 1536,
+      "effectiveRank": 338.3,
+      "relativeContrast": 1.123,
+      "f16": 1,
+      "int8": 0.9866666666666667,
+      "binary": 0.32,
+      "rerank10": 0.7133333333333334,
+      "rerank50": 0.9466666666666667
+    }
+  ]
+}

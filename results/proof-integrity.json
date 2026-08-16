@@ -1,0 +1,101 @@
+{
+  "title": "Atomicity, isolation and server-side validation",
+  "objection": "Redis has no transactions, so you cannot maintain invariants.",
+  "passed": true,
+  "claims": [
+    {
+      "claim": "MULTI/EXEC does NOT roll back: 1 command failed, yet 'before'=1 and 'after'=1 both applied",
+      "ok": true,
+      "detail": "This is the objection, and it is correct. MULTI is batching + isolation, not a transaction. Do not build invariants on it."
+    },
+    {
+      "claim": "read-modify-write corrupts the store under contention: 69 invariant violations (13 index mismatches, 12 runs in wrong number of indexes, 44 lost version bumps)",
+      "ok": true,
+      "detail": "This is what people actually ship, and it is the real source of \"Redis lost my data\" stories."
+    },
+    {
+      "claim": "WATCH/MULTI/EXEC holds the invariants: 0 violations, at the cost of 285 retries",
+      "ok": true,
+      "detail": "optimistic concurrency works, but 72.0% of attempts had to be redone — that is wasted work that grows with contention"
+    },
+    {
+      "claim": "Lua holds the invariants with zero retries: 0 violations, 0 retries",
+      "ok": true,
+      "detail": "the script is the unit of atomicity; no other command interleaves, so there is nothing to retry"
+    },
+    {
+      "claim": "Lua p99 latency 11.315 ms vs WATCH 23.458 ms",
+      "ok": true,
+      "detail": "fewer round trips and no retry loop"
+    },
+    {
+      "claim": "a client asking for succeeded→running is refused server-side (returned 0); run stayed 'succeeded'",
+      "ok": true,
+      "detail": "the legality table lives in the script, so no client version, no retry loop and no rogue service can write an illegal state"
+    },
+    {
+      "claim": "the same procedure loaded as a Redis Function library and executed via FCALL (returned 1)",
+      "ok": true,
+      "detail": "Functions persist in the RDB/AOF and replicate to replicas — server-side logic becomes part of the database, not of whichever client happens to connect"
+    }
+  ],
+  "strategies": {
+    "A · read-modify-write": {
+      "applied": 161,
+      "rejected": 19039,
+      "retries": 0,
+      "errors": 0,
+      "violations": {
+        "illegalStates": 0,
+        "indexMismatch": 13,
+        "duplicateIndex": 12,
+        "versionMismatch": 44,
+        "eventCount": 0
+      },
+      "latencyMs": {
+        "p50": 7.54,
+        "p95": 9.02,
+        "p99": 10.17,
+        "max": 10.191
+      }
+    },
+    "B · WATCH/MULTI/EXEC": {
+      "applied": 111,
+      "rejected": 19089,
+      "retries": 285,
+      "errors": 0,
+      "violations": {
+        "illegalStates": 0,
+        "indexMismatch": 0,
+        "duplicateIndex": 0,
+        "versionMismatch": 0,
+        "eventCount": 0
+      },
+      "latencyMs": {
+        "p50": 5.209,
+        "p95": 8.663,
+        "p99": 23.458,
+        "max": 43.81
+      }
+    },
+    "C · Lua atomic procedure": {
+      "applied": 106,
+      "rejected": 19094,
+      "retries": 0,
+      "errors": 0,
+      "violations": {
+        "illegalStates": 0,
+        "indexMismatch": 0,
+        "duplicateIndex": 0,
+        "versionMismatch": 0,
+        "eventCount": 0
+      },
+      "latencyMs": {
+        "p50": 3.23,
+        "p95": 5.212,
+        "p99": 11.315,
+        "max": 24.853
+      }
+    }
+  }
+}

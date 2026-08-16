@@ -1,0 +1,72 @@
+{
+  "title": "Eviction safety",
+  "objection": "Redis will silently delete my data when it fills up.",
+  "passed": true,
+  "claims": [
+    {
+      "claim": "allkeys-lru destroyed 19,965 of 20,000 durable records (99.8%), with 0 errors raised",
+      "ok": true,
+      "detail": "Redis evicted 294,700 keys and reported success on every single write. The data is gone and nothing told the application. This is the objection, and it is completely valid."
+    },
+    {
+      "claim": "allkeys-random likewise destroyed 17,457 durable records",
+      "ok": true,
+      "detail": "every allkeys-* policy treats your primary records as cache. The word \"allkeys\" is not decoration."
+    },
+    {
+      "claim": "volatile-ttl preserved all 20,000/20,000 durable records while evicting 293,855 cache keys",
+      "ok": true,
+      "detail": "keys written without a TTL are not eviction candidates under any volatile-* policy — so \"is this row durable?\" becomes \"did I set a TTL?\", which is a decision you make per write"
+    },
+    {
+      "claim": "noeviction preserved all 20,000 records and raised 2,181 OOM errors instead of deleting anything",
+      "ok": true,
+      "detail": "the write fails, synchronously, on the connection that caused it — an incident you can page on, rather than a silent corruption you discover next quarter"
+    },
+    {
+      "claim": "the error is explicit and machine-readable: \"OOM command not allowed when used memory > 'maxmemory'.…\"",
+      "ok": true,
+      "detail": "clients can detect the OOM prefix and shed load, rather than silently succeeding against a shrinking dataset"
+    }
+  ],
+  "scenarios": {
+    "allkeys-lru (the trap)": {
+      "policy": "allkeys-lru",
+      "ttlOnCache": true,
+      "alive": 35,
+      "lost": 19965,
+      "oomErrors": 0,
+      "cacheWrites": 400000,
+      "evicted": 294700
+    },
+    "allkeys-random": {
+      "policy": "allkeys-random",
+      "ttlOnCache": true,
+      "alive": 2543,
+      "lost": 17457,
+      "oomErrors": 0,
+      "cacheWrites": 400000,
+      "evicted": 294953
+    },
+    "volatile-ttl + TTL-tagged cache": {
+      "policy": "volatile-ttl",
+      "ttlOnCache": true,
+      "alive": 20000,
+      "lost": 0,
+      "oomErrors": 0,
+      "cacheWrites": 400000,
+      "evicted": 293855
+    },
+    "noeviction (strictest)": {
+      "policy": "noeviction",
+      "ttlOnCache": false,
+      "alive": 20000,
+      "lost": 0,
+      "oomErrors": 2181,
+      "cacheWrites": 112819,
+      "evicted": 0
+    }
+  },
+  "oomMessage": "OOM command not allowed when used memory > 'maxmemory'.",
+  "overheadPct": 41.1
+}

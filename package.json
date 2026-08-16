@@ -1,0 +1,42 @@
+{
+  "name": "nibble",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Redis uses less RAM than you think. nibble measures how much less, and hands you the layout.",
+  "scripts": {
+    "up": "bash scripts/up.sh",
+    "down": "docker rm -f redops-redis redops-redis-durable 2>/dev/null || true",
+    "bench": "node --max-old-space-size=8192 src/bench/run-all.ts",
+    "proof:durability": "node src/proof/durability.ts",
+    "proof:workload": "node src/proof/workload.ts",
+    "capacity": "node src/proof/capacity.ts",
+    "all": "bash scripts/run-all.sh",
+    "rank-study": "node --max-old-space-size=8192 src/bench/vector-rank-study.ts",
+    "proof:integrity": "node src/proof/integrity.ts",
+    "proof:eviction": "node src/proof/eviction.ts",
+    "proof:query": "node src/proof/query.ts",
+    "smoke": "node src/kit/smoke.ts",
+    "doctor": "node doctor.mjs",
+    "proof:cache": "node src/proof/cache.ts",
+    "fix": "node doctor.mjs --fix"
+  },
+  "bin": {
+    "nibble": "./doctor.mjs"
+  },
+  "files": [
+    "doctor.mjs",
+    "src",
+    "docs",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@msgpack/msgpack": "^3.1.2",
+    "ioredis": "^5.8.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/USER/nibble.git"
+  }
+}

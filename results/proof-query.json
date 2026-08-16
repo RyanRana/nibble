@@ -1,0 +1,162 @@
+{
+  "title": "Querying without a key",
+  "objection": "You can only look things up by key, so Redis cannot be a primary database.",
+  "passed": true,
+  "claims": [
+    {
+      "claim": "hand-rolled indexes answer all four queries correctly at 205 B/run (status count p50 2.028 ms, two-way intersect p50 3.901 ms)",
+      "ok": true,
+      "detail": "SINTERCARD and ZCOUNT do the set algebra server-side; the fan-out across shards pipelines into one round trip"
+    },
+    {
+      "claim": "the Query Engine answers the same four queries correctly at 1058 B/run (status count p50 0.556 ms, two-tag intersect p50 0.683 ms)",
+      "ok": true,
+      "detail": "FT.SEARCH gives you a real query language — TAG filters, NUMERIC ranges, sorting, aggregation — over ordinary hashes"
+    },
+    {
+      "claim": "hybrid keeps the full query language at 519 B/run vs 1058 B/run for the plain FT design (2.04× cheaper)",
+      "ok": true,
+      "detail": "index the four columns you filter on, not the twenty you store — the record itself stays packed and sharded"
+    },
+    {
+      "claim": "all three designs return identical, correct answers (running=16,724, tenant+failed=362, cost>8M=11,171, opus+running=4,134)",
+      "ok": true,
+      "detail": "checked against ground truth computed in JS, so a fast-but-wrong index cannot win this comparison"
+    }
+  ],
+  "truth": {
+    "runningCount": 16724,
+    "tenantFailed": 362,
+    "expensive": 11171,
+    "opusRunning": 4134
+  },
+  "designs": {
+    "A": {
+      "design": "sharded hash + hand-rolled indexes",
+      "bytesPerRun": 205.14952,
+      "queries": {
+        "running": {
+          "ms": {
+            "p50": 2.028,
+            "p95": 3.452,
+            "p99": 3.452,
+            "max": 3.452
+          },
+          "n": 16724
+        },
+        "tenantFailed": {
+          "ms": {
+            "p50": 2.996,
+            "p95": 3.398,
+            "p99": 3.398,
+            "max": 3.398
+          },
+          "n": 362
+        },
+        "expensive": {
+          "ms": {
+            "p50": 4.566,
+            "p95": 5.761,
+            "p99": 5.761,
+            "max": 5.761
+          },
+          "n": 11171
+        },
+        "opusRunning": {
+          "ms": {
+            "p50": 3.901,
+            "p95": 3.924,
+            "p99": 3.924,
+            "max": 3.924
+          },
+          "n": 4134
+        }
+      }
+    },
+    "B": {
+      "design": "hash per run + FT.SEARCH index",
+      "bytesPerRun": 1058.19931,
+      "indexMemoryMb": "27.799789428710938",
+      "queries": {
+        "running": {
+          "ms": {
+            "p50": 0.556,
+            "p95": 0.908,
+            "p99": 0.908,
+            "max": 0.908
+          },
+          "n": 16724
+        },
+        "tenantFailed": {
+          "ms": {
+            "p50": 0.414,
+            "p95": 0.43,
+            "p99": 0.43,
+            "max": 0.43
+          },
+          "n": 362
+        },
+        "expensive": {
+          "ms": {
+            "p50": 0.837,
+            "p95": 1.189,
+            "p99": 1.189,
+            "max": 1.189
+          },
+          "n": 11171
+        },
+        "opusRunning": {
+          "ms": {
+            "p50": 0.683,
+            "p95": 0.688,
+            "p99": 0.688,
+            "max": 0.688
+          },
+          "n": 4134
+        }
+      }
+    },
+    "C": {
+      "design": "hybrid: sharded packed record + thin index doc",
+      "bytesPerRun": 518.82809,
+      "queries": {
+        "running": {
+          "ms": {
+            "p50": 1.308,
+            "p95": 3.028,
+            "p99": 3.028,
+            "max": 3.028
+          },
+          "n": 16724
+        },
+        "tenantFailed": {
+          "ms": {
+            "p50": 0.654,
+            "p95": 0.718,
+            "p99": 0.718,
+            "max": 0.718
+          },
+          "n": 362
+        },
+        "expensive": {
+          "ms": {
+            "p50": 1.665,
+            "p95": 2.545,
+            "p99": 2.545,
+            "max": 2.545
+          },
+          "n": 11171
+        },
+        "opusRunning": {
+          "ms": {
+            "p50": 0.947,
+            "p95": 0.961,
+            "p99": 0.961,
+            "max": 0.961
+          },
+          "n": 4134
+        }
+      }
+    }
+  }
+}

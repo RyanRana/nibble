@@ -1,0 +1,109 @@
+{
+  "title": "Durability under crash",
+  "objection": "Redis loses acknowledged writes when it crashes.",
+  "passed": true,
+  "claims": [
+    {
+      "claim": "default (appendonly no, no save) → 0/20,000 acknowledged writes survived SIGKILL (0.00%)",
+      "ok": true,
+      "detail": "expected: total loss — nothing is persisted at all"
+    },
+    {
+      "claim": "RDB snapshots only (save 60 1000) → 0/20,000 acknowledged writes survived SIGKILL (0.00%)",
+      "ok": true,
+      "detail": "expected: loses everything since the last snapshot"
+    },
+    {
+      "claim": "AOF, appendfsync everysec → 20,000/20,000 acknowledged writes survived SIGKILL (100.00%)",
+      "ok": true,
+      "detail": "expected: zero loss on process crash; ~2s exposure to machine loss"
+    },
+    {
+      "claim": "AOF, appendfsync always → 20,000/20,000 acknowledged writes survived SIGKILL (100.00%)",
+      "ok": true,
+      "detail": "expected: zero loss on process crash AND on machine loss"
+    },
+    {
+      "claim": "everysec: a write is exposed to machine loss for p50 1033.937 ms / p99 1060.268 ms / max 1133.19 ms",
+      "ok": true,
+      "detail": "WAITAOF blocks until the write is fsynced but does NOT trigger an fsync, so this latency is exactly the wait for the next scheduled one — i.e. the exposure window, measured rather than assumed. Note the bound is ~2 s, not the 1 s the docs state: aof.c postpones the write() by up to 2000 ms when an fsync is already in flight."
+    },
+    {
+      "claim": "always: exposure collapses to p50 0.262 ms / p99 0.87 ms / max 2.975 ms",
+      "ok": true,
+      "detail": "every write is fsynced before the reply, so there is effectively no window"
+    },
+    {
+      "claim": "everysec vs no persistence: costs 42.5% throughput (377,424 → 216,900 ops/s)",
+      "ok": true,
+      "detail": "expected: AOF writes are buffered and flushed once per event-loop iteration, and the fsync runs on a background thread — so everysec should barely touch the write path. That is what makes it the sane default."
+    },
+    {
+      "claim": "appendfsync always costs 54.6% (171,323 ops/s) — far less than folklore suggests, because Redis group-commits",
+      "ok": true,
+      "detail": "the AOF is fsynced once per event-loop iteration for a whole batch of clients, not once per command"
+    },
+    {
+      "claim": "recovery: 500,000 records across 4,000 keys reloaded from AOF in 0.28 s",
+      "ok": true,
+      "detail": "≈ 1,794,739 records/s reload; RAM 61.9 MiB → 61.9 MiB"
+    }
+  ],
+  "crashMatrix": {
+    "default (appendonly no, no save)": {
+      "acked": 20000,
+      "before": 20000,
+      "survived": 0,
+      "survivalPct": 0,
+      "readMs": 1.2097499999945285
+    },
+    "RDB snapshots only (save 60 1000)": {
+      "acked": 20000,
+      "before": 20000,
+      "survived": 0,
+      "survivalPct": 0,
+      "readMs": 0.4667499999923166
+    },
+    "AOF, appendfsync everysec": {
+      "acked": 20000,
+      "before": 20000,
+      "survived": 20000,
+      "survivalPct": 100,
+      "readMs": 0.4327919999923324
+    },
+    "AOF, appendfsync always": {
+      "acked": 20000,
+      "before": 20000,
+      "survived": 20000,
+      "survivalPct": 100,
+      "readMs": 0.29854199998953845
+    }
+  },
+  "fsyncWindowMs": {
+    "everysec": {
+      "p50": 1033.937,
+      "p95": 1044.61,
+      "p99": 1060.268,
+      "max": 1133.19
+    },
+    "always": {
+      "p50": 0.262,
+      "p95": 0.582,
+      "p99": 0.87,
+      "max": 2.975
+    }
+  },
+  "throughputOpsPerSec": {
+    "none": 377424,
+    "everysec": 216900,
+    "always": 171323,
+    "everysecWaitAof": 137567
+  },
+  "recovery": {
+    "records": 500000,
+    "keys": 4000,
+    "restartMs": 279,
+    "memBefore": 64931840,
+    "memAfter": 64918048
+  }
+}

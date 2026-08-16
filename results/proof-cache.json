@@ -1,0 +1,37 @@
+{
+  "title": "Distributed agent cache",
+  "objection": "A cache is easy. A cache that survives 200 concurrent misses on the same key is not.",
+  "passed": true,
+  "claims": [
+    {
+      "claim": "200 concurrent workers missed the same key → the model was called 1 time(s), not 200",
+      "ok": true,
+      "detail": "1 computed, 199 waited on the lease, 0 lease timeouts. Without a lease this is 200 model calls — a 200× bill and a rate-limit incident."
+    },
+    {
+      "claim": "all 200 workers got a value back",
+      "ok": true,
+      "detail": "p50 174.853 ms · p99 176.485 ms · wall 178 ms for the whole fan-in"
+    },
+    {
+      "claim": "a worker that dies holding the lease does not wedge the key — recovered in 2 ms",
+      "ok": true,
+      "detail": "the lease has a TTL, so the next caller takes over rather than waiting forever"
+    },
+    {
+      "claim": "semantic tier caught 200/200 paraphrased prompts that an exact-key cache would have missed entirely",
+      "ok": true,
+      "detail": "exact-key hit rate on paraphrased traffic is 0 by construction — this is the tier that pays for itself"
+    },
+    {
+      "claim": "0/100 unrelated prompts were wrongly served from cache",
+      "ok": true,
+      "detail": "threshold 0.92 — tune it against your own traffic; too low serves the wrong answer confidently"
+    },
+    {
+      "claim": "cached entry costs 95 B vs 1634 B for a key-per-entry cache (17.1×)",
+      "ok": true,
+      "detail": "1293 B payload · sharded hash + HEXPIRE + zstd, vs one string key per entry with EXPIRE"
+    }
+  ]
+}

@@ -1,0 +1,740 @@
+<title>Redis Under the Microscope</title>
+<style>
+  /* ─── tokens: light is the base set, both dark paths redefine only these ─── */
+  :root {
+    --ground:   #F5F7F9;
+    --surface:  #FFFFFF;
+    --raise:    #EEF1F5;
+    --ink:      #11161D;
+    --muted:    #5A6674;
+    --faint:    #8B96A4;
+    --hairline: #E0E5EB;
+    --accent:   #BC2436;
+    --accent-soft: #FBEBEC;
+    --pass:     #10704A;
+    --warn:     #8C5A00;
+    --fail:     #A82318;
+    --pass-bg:  #E6F4EC;
+    --warn-bg:  #FBF0DC;
+    --fail-bg:  #FBE9E7;
+    --shadow:   0 1px 2px rgba(17,22,29,.05), 0 8px 24px -16px rgba(17,22,29,.28);
+
+    --f-display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-body: ui-serif, Charter, "Iowan Old Style", "Source Serif Pro", Georgia, serif;
+    --f-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+    --measure: 68ch;
+    --wide: 1140px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #0C0F14;
+      --surface:  #141920;
+      --raise:    #1B212A;
+      --ink:      #E6EBF1;
+      --muted:    #949FAE;
+      --faint:    #6C7887;
+      --hairline: #232A34;
+      --accent:   #FF6274;
+      --accent-soft: #2A161A;
+      --pass:     #45D48E;
+      --warn:     #E0A244;
+      --fail:     #FF7264;
+      --pass-bg:  #10241A;
+      --warn-bg:  #251C0D;
+      --fail-bg:  #2A1512;
+      --shadow:   0 1px 2px rgba(0,0,0,.5), 0 10px 30px -18px rgba(0,0,0,.9);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:   #0C0F14;
+    --surface:  #141920;
+    --raise:    #1B212A;
+    --ink:      #E6EBF1;
+    --muted:    #949FAE;
+    --faint:    #6C7887;
+    --hairline: #232A34;
+    --accent:   #FF6274;
+    --accent-soft: #2A161A;
+    --pass:     #45D48E;
+    --warn:     #E0A244;
+    --fail:     #FF7264;
+    --pass-bg:  #10241A;
+    --warn-bg:  #251C0D;
+    --fail-bg:  #2A1512;
+    --shadow:   0 1px 2px rgba(0,0,0,.5), 0 10px 30px -18px rgba(0,0,0,.9);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; }
+  .col  { max-width: var(--measure); }
+
+  /* ── masthead ───────────────────────────────────────────────────────── */
+  header.masthead {
+    padding: 72px 0 40px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 22px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 760;
+    font-size: clamp(34px, 5.4vw, 60px);
+    line-height: 1.02;
+    letter-spacing: -.032em;
+    text-wrap: balance;
+    margin: 0 0 20px;
+    max-width: 20ch;
+  }
+  .standfirst {
+    font-size: clamp(18px, 2vw, 21px);
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0;
+  }
+  .runmeta {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--faint);
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+  }
+  .runmeta b { color: var(--muted); font-weight: 500; }
+
+  /* ── headline figure ────────────────────────────────────────────────── */
+  .headline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 44px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .stat { background: var(--surface); padding: 26px 24px 24px; }
+  .stat .k {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 12px;
+  }
+  .stat .v {
+    font-family: var(--f-display);
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -.028em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+  .stat .v.hero { color: var(--accent); }
+  .stat .sub {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    margin: 10px 0 0;
+  }
+
+  /* ── sections ───────────────────────────────────────────────────────── */
+  section { padding-top: 68px; }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(24px, 3vw, 32px);
+    letter-spacing: -.022em;
+    line-height: 1.14;
+    text-wrap: balance;
+    margin: 0 0 8px;
+  }
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 660;
+    font-size: 18px;
+    letter-spacing: -.012em;
+    margin: 36px 0 10px;
+  }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 14px;
+  }
+  p { margin: 0 0 16px; }
+  .col p:last-child { margin-bottom: 0; }
+  strong { font-weight: 660; }
+  code {
+    font-family: var(--f-mono);
+    font-size: .855em;
+    background: var(--raise);
+    padding: .12em .38em;
+    border-radius: 3px;
+  }
+  a { color: var(--accent); }
+
+  /* ── tables ─────────────────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; margin: 26px 0 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+    font-family: var(--f-mono);
+    font-size: 13px;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding-bottom: 12px;
+  }
+  th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--faint);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 0 14px 9px 0;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+  td {
+    padding: 11px 14px 11px 0;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+  }
+  td:first-child, th:first-child { padding-left: 0; }
+  .num { text-align: right; white-space: nowrap; }
+  .name { font-family: var(--f-body); font-size: 15px; white-space: nowrap; }
+  tr.total td {
+    border-top: 2px solid var(--ink);
+    border-bottom: none;
+    font-weight: 700;
+    padding-top: 13px;
+  }
+  .factor { color: var(--accent); font-weight: 600; }
+
+  /* residual bar: full width = naive, filled = what's left after optimizing */
+  .bar {
+    display: block;
+    width: 90px;
+    height: 7px;
+    background: var(--raise);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+  /* ── verdict cards ──────────────────────────────────────────────────── */
+  .verdicts { display: grid; gap: 16px; margin-top: 30px; }
+  .verdict {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--v, var(--pass));
+    border-radius: 4px;
+    padding: 22px 24px 20px;
+    box-shadow: var(--shadow);
+  }
+  .verdict.ok      { --v: var(--pass); }
+  .verdict.partial { --v: var(--warn); }
+  .verdict.no      { --v: var(--fail); }
+  .vhead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .chip {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .verdict.ok .chip      { background: var(--pass-bg); color: var(--pass); }
+  .verdict.partial .chip { background: var(--warn-bg); color: var(--warn); }
+  .verdict.no .chip      { background: var(--fail-bg); color: var(--fail); }
+  .vhead h3 {
+    margin: 0;
+    font-size: 18.5px;
+    font-family: var(--f-display);
+    font-weight: 660;
+    letter-spacing: -.012em;
+  }
+  .verdict p { max-width: var(--measure); }
+  .verdict p:last-child { margin-bottom: 0; }
+
+  .evidence {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    background: var(--raise);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin: 16px 0;
+    display: grid;
+    gap: 7px;
+  }
+  .evidence div { display: flex; justify-content: space-between; gap: 20px; }
+  .evidence span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .evidence .good { color: var(--pass); }
+  .evidence .bad  { color: var(--fail); }
+
+  /* ── callout ────────────────────────────────────────────────────────── */
+  .callout {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 22px 24px;
+    margin: 30px 0 0;
+  }
+  .callout .kicker { color: var(--accent); }
+  .callout p { max-width: var(--measure); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  ul { margin: 0 0 16px; padding-left: 20px; max-width: var(--measure); }
+  li { margin-bottom: 9px; }
+  li::marker { color: var(--faint); }
+
+  footer {
+    margin-top: 76px;
+    padding-top: 26px;
+    border-top: 1px solid var(--hairline);
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--faint);
+    max-width: var(--measure);
+  }
+  footer p { margin-bottom: 10px; }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Measurement report · Redis 8.10.0</p>
+  <h1>Redis Under the Microscope</h1>
+  <p class="standfirst">
+    An agentic platform's state costs 8.6× less RAM than the default layout gives you —
+    and four of the five reasons people refuse to run Redis as a primary database turn out
+    to be fixable. Both claims are measured here, including the one I got wrong first.
+  </p>
+  <div class="runmeta">
+    <span><b>engine</b> Redis 8.10.0 open source</span>
+    <span><b>allocator</b> jemalloc 5.3.0</span>
+    <span><b>workloads</b> 11 cases · ~90 variants</span>
+    <span><b>method</b> used_memory delta, best-of-2</span>
+  </div>
+</header>
+
+<div class="headline">
+  <div class="stat">
+    <p class="k">Working set, naive layout</p>
+    <p class="v">919 GiB</p>
+    <p class="sub">$11,900 / month</p>
+  </div>
+  <div class="stat">
+    <p class="k">Same data, optimized</p>
+    <p class="v hero">107 GiB</p>
+    <p class="sub">$1,400 / month</p>
+  </div>
+  <div class="stat">
+    <p class="k">Reduction</p>
+    <p class="v">8.6×</p>
+    <p class="sub">across 9 components</p>
+  </div>
+  <div class="stat">
+    <p class="k">Objections tested</p>
+    <p class="v">4<span style="color:var(--faint)">/5</span></p>
+    <p class="sub">fixed, with proof</p>
+  </div>
+</div>
+
+<section>
+  <p class="kicker">The workload</p>
+  <h2>Where an agent platform's memory actually goes</h2>
+  <div class="col">
+    <p>
+      Two million live runs, eighty million transcript turns, two hundred million tool-call
+      spans, twenty million semantic memories, and half a billion dedup keys a day. Each
+      component was measured independently against a flushed Redis instance, comparing the
+      layout you get by writing the obvious code against the cheapest layout that answers
+      the same question.
+    </p>
+    <p>
+      The bar shows what survives optimization: a full bar means the technique bought
+      nothing, a sliver means almost everything was framing tax rather than data.
+    </p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Measured bytes per record, extrapolated to the reference workload</caption>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th class="num">Records</th>
+          <th class="num">Naive</th>
+          <th class="num">Optimized</th>
+          <th class="num">Factor</th>
+          <th>Residual</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="name">Semantic memory</td><td class="num">20,000,000</td><td class="num">611.2 GiB</td><td class="num">42.7 GiB</td><td class="num factor">14.3×</td><td><span class="bar"><i style="width:7.0%"></i></span></td></tr>
+        <tr><td class="name">Conversation transcripts</td><td class="num">80,000,000</td><td class="num">153.5 GiB</td><td class="num">44.3 GiB</td><td class="num factor">3.5×</td><td><span class="bar"><i style="width:28.6%"></i></span></td></tr>
+        <tr><td class="name">Tool-call spans</td><td class="num">200,000,000</td><td class="num">64.5 GiB</td><td class="num">6.8 GiB</td><td class="num factor">9.5×</td><td><span class="bar"><i style="width:10.5%"></i></span></td></tr>
+        <tr><td class="name">Telemetry</td><td class="num">500,000,000</td><td class="num">41.3 GiB</td><td class="num">1.0 GiB</td><td class="num factor">42.6×</td><td><span class="bar"><i style="width:2.3%"></i></span></td></tr>
+        <tr><td class="name">Idempotency / dedup</td><td class="num">500,000,000</td><td class="num">25.2 GiB</td><td class="num">4.2 GiB</td><td class="num factor">6.0×</td><td><span class="bar"><i style="width:16.7%"></i></span></td></tr>
+        <tr><td class="name">Tool-result cache</td><td class="num">50,000,000</td><td class="num">12.9 GiB</td><td class="num">7.5 GiB</td><td class="num factor">1.7×</td><td><span class="bar"><i style="width:58.8%"></i></span></td></tr>
+        <tr><td class="name">Secondary indexes</td><td class="num">100,000,000</td><td class="num">6.1 GiB</td><td class="num">0.4 GiB</td><td class="num factor">14.7×</td><td><span class="bar"><i style="width:6.8%"></i></span></td></tr>
+        <tr><td class="name">Agent run state</td><td class="num">2,000,000</td><td class="num">4.2 GiB</td><td class="num">0.3 GiB</td><td class="num factor">15.3×</td><td><span class="bar"><i style="width:6.5%"></i></span></td></tr>
+        <tr><td class="name">Task queue</td><td class="num">2,000,000</td><td class="num">0.4 GiB</td><td class="num">0.1 GiB</td><td class="num factor">3.8×</td><td><span class="bar"><i style="width:26.3%"></i></span></td></tr>
+        <tr class="total"><td class="name">Total</td><td class="num"></td><td class="num">919 GiB</td><td class="num">107 GiB</td><td class="num factor">8.6×</td><td><span class="bar"><i style="width:11.6%"></i></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">Two free wins</p>
+  <h2>The cheapest bytes are the ones you never had to think about</h2>
+  <div class="col">
+    <p>
+      Most of the reductions above cost something: a codec to maintain, a trained
+      dictionary to ship, a lossy quantizer to justify. Two cost nothing at all, and both
+      were discovered by measurement rather than intuition.
+    </p>
+  </div>
+
+  <div class="callout">
+    <p class="kicker">Hash templates — one config line, Redis ≥ 8.10</p>
+    <p>
+      Redis 8.10 added a <code>template-listpack</code> encoding that stores field names
+      <em>once</em> for hashes sharing a schema. Setting
+      <code>hash-min-template-entries 4</code> took agent run state from
+      <strong>729 → 409 bytes per run</strong> with no application change whatsoever — and it
+      beat manually shortening every field name to a single character (465 B), while keeping
+      the schema readable. It is off by default.
+    </p>
+  </div>
+
+  <div class="callout" style="margin-top:16px">
+    <p class="kicker">Shard width — one constant, worth 15%</p>
+    <p>
+      A sharded hash's listpack is a single allocation, and jemalloc rounds it to a size
+      class. At 124 fields per shard an entry costs <strong>166.6 B</strong>; at 128 fields
+      the same entry costs <strong>192.5 B</strong>. Identical data, identical encoding.
+      This also explained an earlier confusion: per-field TTLs appeared to cost ~31 B/field
+      when the intrinsic cost is ~10 B — the rest was the shard crossing a 4 KiB boundary.
+    </p>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">Negative results</p>
+  <h2>Four things that didn't work</h2>
+  <div class="col">
+    <p>
+      These are kept in the repository deliberately. A benchmark that only reports its
+      successes is marketing.
+    </p>
+    <ul>
+      <li>
+        <strong>Compressing schema-packed records.</strong> Packing had already removed the
+        redundancy; both zstd and dictionary-deflate made a 110-byte record <em>larger</em>.
+        Compression and schema-packing are substitutes, not complements.
+      </li>
+      <li>
+        <strong>Bitmaps for sparse indexes.</strong> A bitmap costs the same whether 2% or
+        100% of its bits are set. At 2% density it lost to sharded intsets (9.4 vs 4.4
+        B/member); at 60% density it won by 20×. The crossover is measured, not assumed.
+      </li>
+      <li>
+        <strong>Reducing dimensions before binary quantization.</strong>
+        <code>REDUCE 256 + BIN</code> came out <em>larger</em> than plain binary, because at
+        256 dimensions the projection matrix costs more than the dimensions it saves. Once
+        you reach binary, the HNSW graph is ~80% of the cost.
+      </li>
+      <li>
+        <strong>MessagePack for queue tasks.</strong> Slightly worse than JSON — Redis
+        streams already deduplicate repeated field names across entries, so the binary
+        framing had nothing left to win.
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">The objections</p>
+  <h2>Why people refuse to run Redis as a primary database</h2>
+  <div class="col">
+    <p>
+      Each of these was turned into an adversarial test that first tries to <em>produce</em>
+      the failure, then tries to prevent it. Every claim below is a program that exits
+      non-zero if it stops being true.
+    </p>
+  </div>
+
+  <div class="verdicts">
+
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">Fixed · config only</span>
+        <h3>“It loses acknowledged writes when it crashes”</h3>
+      </div>
+      <p>
+        True by default, and the default is genuinely dangerous. Under stock settings a
+        <code>SIGKILL</code> destroyed every acknowledged write. With an append-only file
+        enabled, none.
+      </p>
+      <div class="evidence">
+        <div><span>default (<code>appendonly no</code>)</span><span class="bad">0 / 20,000 survived</span></div>
+        <div><span>RDB snapshots only</span><span class="bad">0 / 20,000 survived</span></div>
+        <div><span>AOF, <code>appendfsync everysec</code></span><span class="good">20,000 / 20,000 survived</span></div>
+        <div><span>AOF, <code>appendfsync always</code></span><span class="good">20,000 / 20,000 survived</span></div>
+      </div>
+      <p>
+        The distinction most write-ups blur: <code>docker kill</code> is <em>process</em>
+        loss, and the kernel page cache survives it. The <code>everysec</code> window is an
+        <em>fsync</em> window, not a <code>write()</code> window — so it loses nothing to a
+        process crash, only to machine loss. Rather than assert that window, I measured it:
+        <code>WAITAOF</code> blocks until a write is fsynced but does not itself trigger one,
+        so its latency <em>is</em> the exposure window — <strong>p50 1,028 ms</strong> under
+        <code>everysec</code>, collapsing to <strong>p50 0.33 ms</strong> under
+        <code>always</code>.
+      </p>
+      <p>
+        Note the documented bound is wrong. redis.io says one second; the source postpones
+        the <code>write()</code> by up to <strong>2,000 ms</strong> when an fsync is already
+        in flight. And audit <code>no-appendfsync-on-rewrite</code>: set to
+        <code>yes</code> it silently defeats <code>appendfsync always</code> entirely during
+        every rewrite.
+      </p>
+    </article>
+
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">Fixed · design discipline</span>
+        <h3>“It silently deletes my data when it fills up”</h3>
+      </div>
+      <p>
+        The scariest failure mode Redis has, and completely real. With
+        <code>allkeys-lru</code> — the policy every cache tutorial recommends — filling the
+        instance destroyed 99.8% of durable records while reporting success on every single
+        write.
+      </p>
+      <div class="evidence">
+        <div><span><code>allkeys-lru</code></span><span class="bad">19,965 of 20,000 destroyed · 0 errors</span></div>
+        <div><span><code>allkeys-random</code></span><span class="bad">17,457 destroyed · 0 errors</span></div>
+        <div><span><code>volatile-ttl</code></span><span class="good">0 destroyed · 293,855 cache keys evicted</span></div>
+        <div><span><code>noeviction</code></span><span class="good">0 destroyed · 2,181 explicit OOM errors</span></div>
+      </div>
+      <p>
+        The fix isn't clever, just deliberate. Eviction is a per-key property in disguise,
+        and <code>volatile-*</code> policies expose it: <strong>a key with no TTL is never an
+        eviction candidate</strong>. Write primary records without a TTL, cache entries with
+        one, and a single instance holds both safely — failing loudly, on the connection that
+        caused it, instead of quietly shrinking.
+      </p>
+    </article>
+
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">Fixed · move logic server-side</span>
+        <h3>“There are no transactions, so you can't maintain invariants”</h3>
+      </div>
+      <p>
+        Half true, and the true half matters: <code>MULTI</code>/<code>EXEC</code> does
+        <em>not</em> roll back. Proven live — a transaction with one failing command still
+        applied the commands around it. Do not build invariants on it.
+      </p>
+      <p>
+        But Redis runs a Lua script as one unit against a single-threaded core, which is
+        stronger isolation than the READ COMMITTED most people actually run Postgres at.
+        Sixty-four workers racing on the same agent runs, checked against four invariants:
+      </p>
+      <div class="evidence">
+        <div><span>read-modify-write (what most teams ship)</span><span class="bad">69 violations · p99 10.2 ms</span></div>
+        <div><span><code>WATCH</code>/<code>MULTI</code>/<code>EXEC</code></span><span class="good">0 violations · 285 retries · p99 23.5 ms</span></div>
+        <div><span>Lua procedure</span><span class="good">0 violations · 0 retries · p99 11.3 ms</span></div>
+      </div>
+      <p>
+        The script also enforces the legality table server-side, so a buggy client physically
+        cannot write an illegal state — a request for <code>succeeded → running</code> was
+        refused and the run stayed <code>succeeded</code>. It does this by patching the status
+        byte and version counter of a <em>schema-packed binary record in place</em>, never
+        decoding the other 107 bytes. The RAM optimization doesn't cost you server-side
+        logic; it enables it.
+      </p>
+    </article>
+
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">Fixed · hybrid layout</span>
+        <h3>“You can only query by key”</h3>
+      </div>
+      <p>
+        Obsolete — Redis 8 ships the Query Engine in the open-source build. But there is a
+        real tension worth surfacing rather than hiding: <strong><code>FT.SEARCH</code>
+        indexes keys by prefix, so it cannot see inside a sharded hash.</strong> Sharding and
+        the query engine are incompatible.
+      </p>
+      <div class="evidence">
+        <div><span>sharded + hand-rolled indexes</span><span>205 B/run · 2.03 ms · you write it</span></div>
+        <div><span>hybrid: packed record + thin index doc</span><span class="good">519 B/run · 0.56 ms · full query language</span></div>
+        <div><span>hash per run + full FT index</span><span>1,058 B/run · 0.56 ms · full query language</span></div>
+      </div>
+      <p>
+        The hybrid is the recommendation: keep the fat record packed inside a sharded hash,
+        and index a <em>small</em> document carrying only the columns you actually filter on.
+        Same query surface, 2.04× cheaper. All three designs were checked against ground
+        truth computed outside Redis, so a fast-but-wrong index couldn't win.
+      </p>
+    </article>
+
+    <article class="verdict partial">
+      <div class="vhead">
+        <span class="chip">Unfixed in open source</span>
+        <h3>“The dataset has to fit in RAM”</h3>
+      </div>
+      <p>
+        Still true, and it always has been. Tiered storage is commercial-only; the managed
+        SSD tiers add roughly 300 µs on tier hits. The pricing also exposes a structural
+        constraint worth designing around: on ElastiCache, <strong>synchronous durability and
+        data tiering are mutually exclusive</strong>.
+      </p>
+      <p>
+        Cheap, durable, fast — pick two. Shrinking the dataset is the only lever that doesn't
+        force the choice, which is the entire argument for the first half of this report.
+      </p>
+    </article>
+
+  </div>
+</section>
+
+<section>
+  <p class="kicker">Correction</p>
+  <h2>The number I published to myself, then had to withdraw</h2>
+  <div class="col">
+    <p>
+      My first vector benchmark reported <strong>binary quantization at 83% recall@10</strong>,
+      with binary→int8 reranking recovering 100%. Both were real measurements. Both were
+      close to meaningless.
+    </p>
+    <p>
+      Binary recall is overwhelmingly a property of the <em>corpus</em>, not the quantizer.
+      Sweeping a corpus from low to full intrinsic rank with the quantizer completely
+      unchanged:
+    </p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>recall@10 vs exact float32 cosine · 4,000 × 1536-d · quantizer identical throughout</caption>
+      <thead>
+        <tr>
+          <th>Corpus rank</th>
+          <th class="num">Effective rank</th>
+          <th class="num">Contrast</th>
+          <th class="num">int8</th>
+          <th class="num">binary</th>
+          <th class="num">bin→int8 ×10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>16</td><td class="num">17.0</td><td class="num">2.52</td><td class="num">100.0%</td><td class="num factor">83.3%</td><td class="num">100.0%</td></tr>
+        <tr><td>128</td><td class="num">100.0</td><td class="num">3.66</td><td class="num">100.0%</td><td class="num">62.0%</td><td class="num">98.7%</td></tr>
+        <tr><td>768</td><td class="num">277.6</td><td class="num">5.06</td><td class="num">99.3%</td><td class="num factor">34.7%</td><td class="num">76.7%</td></tr>
+        <tr><td>1536 (full)</td><td class="num">338.3</td><td class="num">1.12</td><td class="num">98.7%</td><td class="num factor">32.0%</td><td class="num">71.3%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col" style="margin-top:26px">
+    <p>
+      My original 83% was a rank-16 artifact. At rank 768 the same code measures
+      <strong>34.7%</strong> — within a point of Redis's own published 35.5% for Vector Sets
+      <code>BIN</code> on real Word2Vec embeddings. Real text corpora live in that regime.
+    </p>
+    <p>
+      Two structural facts compound it: Redis Vector Sets <strong>discard the full-precision
+      vector</strong> on insert, so no rescoring path exists inside them — and emulating one
+      with a second key costs more than simply using int8.
+    </p>
+    <p>
+      <strong>Use int8. Do not use binary quantization in Vector Sets for production
+      retrieval.</strong> int8 held between 98.7% and 100% across the entire sweep, matching
+      every published source. That is the finding that generalizes — and the general lesson
+      is that a compression ratio without a recall number, measured on a representative
+      corpus, is not a result at all.
+    </p>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">Method</p>
+  <h2>How the numbers were taken</h2>
+  <div class="col">
+    <p>
+      Each variant runs against a flushed instance. Memory is <code>used_memory</code> minus
+      client, AOF and replication buffers, sampled after <code>MEMORY PURGE</code> and
+      differenced against a baseline taken the same way. Every variant runs twice and the
+      <em>cheaper</em> observation is kept, because allocator noise is one-sided — a sample
+      can be inflated by fragmentation or a background rehash, but never deflated below the
+      true allocation.
+    </p>
+    <p>
+      I deliberately avoid <code>used_memory_dataset</code>. Redis classifies the top-level
+      key dictionary as <em>overhead</em>, and per-key overhead is precisely what half these
+      optimizations attack; using the dataset figure would have silently hidden the single
+      largest win.
+    </p>
+  </div>
+
+  <footer>
+    <p><strong>Caveats.</strong> Single-node Docker on one laptop — no cluster, no
+    replication, no network. Data is synthetic throughout: text is Zipf-sampled from a
+    20,000-word vocabulary, which is <em>harder</em> to compress than real prose, so the
+    compression figures are conservative. Vectors are synthetic; see the correction above.</p>
+    <p>Prices are August 2026 list, on-demand, us-east-1, priced against the documented 25%
+    memory reserve. They move.</p>
+    <p><code>docker kill</code> proves process-crash durability. It cannot prove machine-loss
+    durability — nothing running inside a healthy kernel can — which is why the fsync window
+    is measured separately rather than asserted.</p>
+  </footer>
+</section>
+
+</div>
