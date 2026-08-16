@@ -1,5 +1,5 @@
 /**
- * PROOF 03 — "Redis will silently delete my data when it fills up."
+ * PROOF 03 - "Redis will silently delete my data when it fills up."
  *
  * This one is real, it is the scariest failure mode Redis has, and almost every
  * team that hits it hits it the same way: they ran Redis as a cache, set
@@ -16,8 +16,8 @@
  *     cache entries    →  written WITH a TTL      →  evictable, by design
  *
  * and one instance safely holds both. When memory runs out, Redis evicts the
- * cache and starts refusing writes with an OOM error — loudly, at the moment it
- * happens, to the client that caused it — instead of quietly dropping state.
+ * cache and starts refusing writes with an OOM error - loudly, at the moment it
+ * happens, to the client that caused it - instead of quietly dropping state.
  *
  * This file demonstrates the data loss first, then the fix, then verifies the
  * failure is loud. It also measures the thing people forget: `maxmemory`
@@ -31,7 +31,7 @@ import { startRedis, rmContainer, waitReady, Report } from './harness.ts';
 
 const PORT = 6397;
 const NAME = 'redops-evict';
-const MAXMEM = 64 * 1024 * 1024; // 64 MiB — small enough to fill quickly
+const MAXMEM = 64 * 1024 * 1024; // 64 MiB - small enough to fill quickly
 
 const PRIMARY = 20_000; // durable agent-run records; MUST survive
 const PAYLOAD = Buffer.alloc(400, 0x41);
@@ -131,7 +131,7 @@ report.assert(
   `volatile-ttl preserved all ${vol.alive.toLocaleString()}/${PRIMARY.toLocaleString()} durable records ` +
     `while evicting ${vol.evicted.toLocaleString()} cache keys`,
   vol.alive === PRIMARY,
-  'keys written without a TTL are not eviction candidates under any volatile-* policy — ' +
+  'keys written without a TTL are not eviction candidates under any volatile-* policy - ' +
     'so "is this row durable?" becomes "did I set a TTL?", which is a decision you make per write',
 );
 
@@ -141,7 +141,7 @@ const strict = await scenario('noeviction (strictest)', 'noeviction', false);
 report.assert(
   `noeviction preserved all ${strict.alive.toLocaleString()} records and raised ${strict.oomErrors.toLocaleString()} OOM errors instead of deleting anything`,
   strict.alive === PRIMARY && strict.oomErrors > 0,
-  'the write fails, synchronously, on the connection that caused it — an incident you can page on, ' +
+  'the write fails, synchronously, on the connection that caused it - an incident you can page on, ' +
     'rather than a silent corruption you discover next quarter',
 );
 
@@ -172,7 +172,7 @@ const overheadPct =
     Number(/used_memory:(\d+)/.exec(before)![1])) * 100;
 report.info(
   `at the eviction boundary, ${overheadPct.toFixed(1)}% of used_memory was overhead (key dict, client buffers, ` +
-    'replication backlog) rather than values — budget maxmemory against the whole instance, not your record count',
+    'replication backlog) rather than values - budget maxmemory against the whole instance, not your record count',
 );
 report.info(
   'set maxmemory-clients (default 0 = unlimited) or a single slow consumer\'s output buffer can push a ' +

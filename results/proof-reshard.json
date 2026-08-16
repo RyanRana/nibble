@@ -1,0 +1,47 @@
+{
+  "title": "Online resharding",
+  "objection": "You cannot grow a sharded keyspace without a flush.",
+  "passed": true,
+  "claims": [
+    {
+      "claim": "seeded 20,000 records across 32 shards",
+      "ok": true,
+      "detail": "shard count is a power of two so that growth is a split, not a reshuffle"
+    },
+    {
+      "claim": "split 32 -> 64 shards moved 11,071 of 20,000 records in 10095 ms",
+      "ok": true,
+      "detail": "about half the keys move, which is the whole point of powers of two. 97,399 reads and 43,149 writes ran concurrently."
+    },
+    {
+      "claim": "no read missed during the split: 0 of 97,399",
+      "ok": true,
+      "detail": "readers check the new home then the pre-split home, so a record in either is found"
+    },
+    {
+      "claim": "all 20,000 records readable after the split (0 missing, 0 corrupted)",
+      "ok": true,
+      "detail": "checked one by one against the id that was written"
+    },
+    {
+      "claim": "20,000 stored fields for 20,000 records: no duplicates left behind",
+      "ok": true,
+      "detail": "a copy left in the old home would show up here as an extra field"
+    },
+    {
+      "claim": "generation went unset -> 6, draining flag cleared",
+      "ok": true,
+      "detail": "while draining, the marker carries the previous k so readers know to check both homes"
+    }
+  ],
+  "split": {
+    "from": 32,
+    "to": 64,
+    "moved": 11071,
+    "scanned": 49846,
+    "ms": 10095
+  },
+  "reads": 97399,
+  "writes": 43149,
+  "readMisses": 0
+}

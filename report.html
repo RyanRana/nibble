@@ -344,10 +344,10 @@
 <div class="wrap">
 
 <header class="masthead">
-  <p class="eyebrow">Measurement report · Redis 8.10.0</p>
+  <p class="eyebrow">Measurement report · Redis 8.10.0 · nibble</p>
   <h1>Redis Under the Microscope</h1>
   <p class="standfirst">
-    An agentic platform's state costs 8.6× less RAM than the default layout gives you —
+    An agentic platform's state costs 8.6× less RAM than the default layout gives you -
     and four of the five reasons people refuse to run Redis as a primary database turn out
     to be fixable. Both claims are measured here, including the one I got wrong first.
   </p>
@@ -440,25 +440,25 @@
   </div>
 
   <div class="callout">
-    <p class="kicker">Hash templates — one config line, Redis ≥ 8.10</p>
+    <p class="kicker">Hash templates - one config line, Redis ≥ 8.10</p>
     <p>
       Redis 8.10 added a <code>template-listpack</code> encoding that stores field names
       <em>once</em> for hashes sharing a schema. Setting
       <code>hash-min-template-entries 4</code> took agent run state from
-      <strong>729 → 409 bytes per run</strong> with no application change whatsoever — and it
+      <strong>729 → 409 bytes per run</strong> with no application change whatsoever - and it
       beat manually shortening every field name to a single character (465 B), while keeping
       the schema readable. It is off by default.
     </p>
   </div>
 
   <div class="callout" style="margin-top:16px">
-    <p class="kicker">Shard width — one constant, worth 15%</p>
+    <p class="kicker">Shard width - one constant, worth 15%</p>
     <p>
       A sharded hash's listpack is a single allocation, and jemalloc rounds it to a size
       class. At 124 fields per shard an entry costs <strong>166.6 B</strong>; at 128 fields
       the same entry costs <strong>192.5 B</strong>. Identical data, identical encoding.
       This also explained an earlier confusion: per-field TTLs appeared to cost ~31 B/field
-      when the intrinsic cost is ~10 B — the rest was the shard crossing a 4 KiB boundary.
+      when the intrinsic cost is ~10 B - the rest was the shard crossing a 4 KiB boundary.
     </p>
   </div>
 </section>
@@ -489,7 +489,7 @@
         you reach binary, the HNSW graph is ~80% of the cost.
       </li>
       <li>
-        <strong>MessagePack for queue tasks.</strong> Slightly worse than JSON — Redis
+        <strong>MessagePack for queue tasks.</strong> Slightly worse than JSON - Redis
         streams already deduplicate repeated field names across entries, so the binary
         framing had nothing left to win.
       </li>
@@ -529,10 +529,10 @@
       <p>
         The distinction most write-ups blur: <code>docker kill</code> is <em>process</em>
         loss, and the kernel page cache survives it. The <code>everysec</code> window is an
-        <em>fsync</em> window, not a <code>write()</code> window — so it loses nothing to a
+        <em>fsync</em> window, not a <code>write()</code> window - so it loses nothing to a
         process crash, only to machine loss. Rather than assert that window, I measured it:
         <code>WAITAOF</code> blocks until a write is fsynced but does not itself trigger one,
-        so its latency <em>is</em> the exposure window — <strong>p50 1,028 ms</strong> under
+        so its latency <em>is</em> the exposure window - <strong>p50 1,028 ms</strong> under
         <code>everysec</code>, collapsing to <strong>p50 0.33 ms</strong> under
         <code>always</code>.
       </p>
@@ -552,7 +552,7 @@
       </div>
       <p>
         The scariest failure mode Redis has, and completely real. With
-        <code>allkeys-lru</code> — the policy every cache tutorial recommends — filling the
+        <code>allkeys-lru</code> - the policy every cache tutorial recommends - filling the
         instance destroyed 99.8% of durable records while reporting success on every single
         write.
       </p>
@@ -566,7 +566,7 @@
         The fix isn't clever, just deliberate. Eviction is a per-key property in disguise,
         and <code>volatile-*</code> policies expose it: <strong>a key with no TTL is never an
         eviction candidate</strong>. Write primary records without a TTL, cache entries with
-        one, and a single instance holds both safely — failing loudly, on the connection that
+        one, and a single instance holds both safely - failing loudly, on the connection that
         caused it, instead of quietly shrinking.
       </p>
     </article>
@@ -578,7 +578,7 @@
       </div>
       <p>
         Half true, and the true half matters: <code>MULTI</code>/<code>EXEC</code> does
-        <em>not</em> roll back. Proven live — a transaction with one failing command still
+        <em>not</em> roll back. Proven live - a transaction with one failing command still
         applied the commands around it. Do not build invariants on it.
       </p>
       <p>
@@ -593,7 +593,7 @@
       </div>
       <p>
         The script also enforces the legality table server-side, so a buggy client physically
-        cannot write an illegal state — a request for <code>succeeded → running</code> was
+        cannot write an illegal state - a request for <code>succeeded → running</code> was
         refused and the run stayed <code>succeeded</code>. It does this by patching the status
         byte and version counter of a <em>schema-packed binary record in place</em>, never
         decoding the other 107 bytes. The RAM optimization doesn't cost you server-side
@@ -607,7 +607,7 @@
         <h3>“You can only query by key”</h3>
       </div>
       <p>
-        Obsolete — Redis 8 ships the Query Engine in the open-source build. But there is a
+        Obsolete - Redis 8 ships the Query Engine in the open-source build. But there is a
         real tension worth surfacing rather than hiding: <strong><code>FT.SEARCH</code>
         indexes keys by prefix, so it cannot see inside a sharded hash.</strong> Sharding and
         the query engine are incompatible.
@@ -637,7 +637,7 @@
         data tiering are mutually exclusive</strong>.
       </p>
       <p>
-        Cheap, durable, fast — pick two. Shrinking the dataset is the only lever that doesn't
+        Cheap, durable, fast - pick two. Shrinking the dataset is the only lever that doesn't
         force the choice, which is the entire argument for the first half of this report.
       </p>
     </article>
@@ -686,21 +686,181 @@
   <div class="col" style="margin-top:26px">
     <p>
       My original 83% was a rank-16 artifact. At rank 768 the same code measures
-      <strong>34.7%</strong> — within a point of Redis's own published 35.5% for Vector Sets
+      <strong>34.7%</strong> - within a point of Redis's own published 35.5% for Vector Sets
       <code>BIN</code> on real Word2Vec embeddings. Real text corpora live in that regime.
     </p>
     <p>
       Two structural facts compound it: Redis Vector Sets <strong>discard the full-precision
-      vector</strong> on insert, so no rescoring path exists inside them — and emulating one
+      vector</strong> on insert, so no rescoring path exists inside them - and emulating one
       with a second key costs more than simply using int8.
     </p>
     <p>
       <strong>Use int8. Do not use binary quantization in Vector Sets for production
       retrieval.</strong> int8 held between 98.7% and 100% across the entire sweep, matching
-      every published source. That is the finding that generalizes — and the general lesson
+      every published source. That is the finding that generalizes - and the general lesson
       is that a compression ratio without a recall number, measured on a representative
       corpus, is not a result at all.
     </p>
+  </div>
+</section>
+
+
+<section>
+  <p class="kicker">Errata</p>
+  <h2>Four things this report got wrong, and what they cost</h2>
+  <div class="col">
+    <p>
+      Kept visible rather than quietly patched. Every one was caught by the repo's
+      own tests or by checking a claim against the source, and each changed a
+      number that had already been published above.
+    </p>
+  </div>
+
+  <div class="verdicts">
+    <article class="verdict no">
+      <div class="vhead">
+        <span class="chip">Corrected</span>
+        <h3>Two of the "Redis 8 defaults" were not defaults</h3>
+      </div>
+      <p>
+        The harness reset <code>list-max-listpack-size</code> to 128 between variants
+        and called it the default. It is <strong>-2</strong>, which is a size cap of
+        8 KiB per quicklist node, not an entry count. With 1.2 KiB transcript turns
+        that is about 6 turns per node instead of 128, so cases 02, 03 and 09 were
+        measured in the wrong regime and re-run.
+      </p>
+      <div class="evidence">
+        <div><span><code>list-compress-depth 1</code> on transcripts</span><span class="bad">1,150 → 1,444 B/turn</span></div>
+        <div><span>LIST of JSON spans</span><span class="bad">171.5 → 269.1 B/span</span></div>
+        <div><span><code>hash-max-listpack-entries</code> claimed 128, actually</span><span>512</span></div>
+      </div>
+      <p>
+        The 8.6× headline is unchanged, because the affected rows were not the
+        winners. The lesson is narrower and more useful: a negative value in that
+        config means something categorically different, and reading it as a count
+        silently puts you in another regime.
+      </p>
+    </article>
+
+    <article class="verdict no">
+      <div class="vhead">
+        <span class="chip">Corrected</span>
+        <h3>MessagePack is not worse than JSON for queue tasks</h3>
+      </div>
+      <p>
+        Reported from an early run and contradicted by the final data: msgpack
+        measured <strong>191.4 B</strong> against JSON's 216.6 B. It wins, modestly.
+      </p>
+      <p>
+        The real finding, which survived, is about streams: Redis already
+        deduplicates field names across entries sharing a fieldset, so packing a
+        span into one msgpack field cost <strong>250.9 B</strong> against
+        <strong>168.2 B</strong> for plain fields. Check what the container does for
+        you before optimizing the payload.
+      </p>
+    </article>
+
+    <article class="verdict no">
+      <div class="vhead">
+        <span class="chip">Corrected</span>
+        <h3>The Bloom filter "discrepancy" was not one</h3>
+      </div>
+      <p>
+        Published 1.4 B/id where the theoretical figure is 1.198. Both are right:
+        <code>MEMORY USAGE</code> is 1.1984, and <code>used_memory</code> is 1.3333
+        because a single 585 KiB filter rounds up to the 640 KiB jemalloc class. The
+        published number includes the rounding, which is the cost actually paid.
+      </p>
+    </article>
+
+    <article class="verdict no">
+      <div class="vhead">
+        <span class="chip">Corrected</span>
+        <h3>A durability run reported survivors that were stale data</h3>
+      </div>
+      <p>
+        An early crash test showed 4,000 of 20,000 writes surviving with persistence
+        disabled, which is impossible. The harness removed the Docker volume before
+        removing the container holding it, so the delete failed silently and the
+        previous scenario's dataset was reloaded. Corrected result:
+        <strong>0 of 20,000</strong>.
+      </p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <p class="kicker">Added since publication</p>
+  <h2>Three results that were not in the first version</h2>
+
+  <div class="verdicts">
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">New</span>
+        <h3>A sketch is not automatically the cheap answer</h3>
+      </div>
+      <p>
+        A t-digest allocates its full size at <code>CREATE</code> and never grows:
+        verified at 9,864 B before <em>and</em> after 100,000 adds. At 5,000
+        samples per series it ties RedisTimeSeries (2.1 vs 2.6 B/sample), and
+        TimeSeries is exact. Break-even is about 4,700 samples; below that the
+        sketch simply loses.
+      </p>
+      <p>
+        And agent traffic is bimodal. A 0.5% timeout spike puts p99 on a
+        near-vertical part of the CDF:
+      </p>
+      <div class="evidence">
+        <div><span>clean lognormal, p99 error</span><span class="good">0.95%</span></div>
+        <div><span>+ 0.5% hitting a 30 s timeout</span><span class="bad">10.32%</span></div>
+        <div><span>timeouts excluded and counted exactly</span><span class="good">0.89%</span></div>
+      </div>
+    </article>
+
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">New</span>
+        <h3>The cache survives 200 concurrent misses on one key</h3>
+      </div>
+      <div class="evidence">
+        <div><span>200 workers, same missing key</span><span class="good">1 model call, not 200</span></div>
+        <div><span>fan-in latency</span><span>p50 170 ms · p99 171 ms</span></div>
+        <div><span>paraphrased prompts caught semantically</span><span class="good">200 / 200</span></div>
+        <div><span>unrelated prompts wrongly served</span><span class="good">0 / 100</span></div>
+        <div><span>bytes per cached entry</span><span class="good">95 B vs 1,634 B (17.1×)</span></div>
+      </div>
+      <p>
+        The test found a real race in the implementation: a waiter checks value
+        then lease, so if the winner publishes between those two reads the waiter
+        concludes the winner died and computes anyway. Exactly one worker in 200
+        hit it. Fixed by re-checking the value after finding the lease gone.
+      </p>
+    </article>
+
+    <article class="verdict ok">
+      <div class="vhead">
+        <span class="chip">New</span>
+        <h3>Sharded keyspaces can grow online</h3>
+      </div>
+      <p>
+        Shard counts constrained to powers of two make growth a split: with
+        <code>h % 2^k</code>, incrementing k sends each key either to where it
+        already is or to <code>s + 2^k</code>. Half the keys move, one shard at a
+        time, with traffic running.
+      </p>
+      <div class="evidence">
+        <div><span>32 → 64 shards, 20,000 records</span><span class="good">10,314 moved</span></div>
+        <div><span>concurrent reads that missed</span><span class="good">0 of 97,399</span></div>
+        <div><span>duplicates left behind</span><span class="good">0</span></div>
+      </div>
+      <p>
+        Both Lua scripts touch a single key, so the protocol needs no cross-slot
+        transaction and stays legal on Redis Cluster. The proof also established a
+        hard requirement: a client that never refreshes its generation cannot be
+        made safe by any drain, so the splitter waits out a bounded staleness
+        window and sweeps once more before declaring itself finished.
+      </p>
+    </article>
   </div>
 </section>
 
@@ -712,7 +872,7 @@
       Each variant runs against a flushed instance. Memory is <code>used_memory</code> minus
       client, AOF and replication buffers, sampled after <code>MEMORY PURGE</code> and
       differenced against a baseline taken the same way. Every variant runs twice and the
-      <em>cheaper</em> observation is kept, because allocator noise is one-sided — a sample
+      <em>cheaper</em> observation is kept, because allocator noise is one-sided - a sample
       can be inflated by fragmentation or a background rehash, but never deflated below the
       true allocation.
     </p>
@@ -725,14 +885,14 @@
   </div>
 
   <footer>
-    <p><strong>Caveats.</strong> Single-node Docker on one laptop — no cluster, no
+    <p><strong>Caveats.</strong> Single-node Docker on one laptop - no cluster, no
     replication, no network. Data is synthetic throughout: text is Zipf-sampled from a
     20,000-word vocabulary, which is <em>harder</em> to compress than real prose, so the
     compression figures are conservative. Vectors are synthetic; see the correction above.</p>
     <p>Prices are August 2026 list, on-demand, us-east-1, priced against the documented 25%
     memory reserve. They move.</p>
     <p><code>docker kill</code> proves process-crash durability. It cannot prove machine-loss
-    durability — nothing running inside a healthy kernel can — which is why the fsync window
+    durability - nothing running inside a healthy kernel can - which is why the fsync window
     is measured separately rather than asserted.</p>
   </footer>
 </section>

@@ -24,7 +24,7 @@ export class Writer {
     this.need(1);
     this.buf[this.off++] = v & 0xff;
   }
-  /** LEB128 — 1 byte for <128, 2 for <16384. Most agent counters are 1–3 bytes. */
+  /** LEB128 - 1 byte for <128, 2 for <16384. Most agent counters are 1–3 bytes. */
   varint(v: number) {
     let n = v >>> 0;
     this.need(5);
@@ -117,7 +117,7 @@ const idx = (arr: string[], v: string) => {
 /** AgentRun → ~110 bytes. Same record as JSON's ~470. */
 export function packRun(run: AgentRun): Buffer {
   const w = new Writer(160);
-  w.u8(1); // schema version — migrations stay possible
+  w.u8(1); // schema version - migrations stay possible
   w.bytes(uuidToBytes(run.run_id));
   w.bytes(uuidToBytes(run.tenant_id));
   w.bytes(uuidToBytes(run.agent_id));
@@ -224,8 +224,8 @@ export function unzstd(b: Buffer): Buffer {
  *
  * Small records are where naive compression falls over: a 300-byte JSON blob
  * has no history to back-reference, so zstd/gzip often make it *bigger*. A
- * preset dictionary hands the compressor a prebuilt history — the field names,
- * the enum values, the URL prefixes your records all share — so the very first
+ * preset dictionary hands the compressor a prebuilt history - the field names,
+ * the enum values, the URL prefixes your records all share - so the very first
  * byte can be a back-reference. This is the single highest-leverage trick for
  * agentic workloads, which are millions of small, near-identical records.
  *
@@ -245,7 +245,7 @@ export function inflateDict(b: Buffer, dictionary: Buffer): Buffer {
 
 // ──────────────────────────────── json ─────────────────────────────────
 //
-// msgpack lives in ./msgpack.ts — it is a benchmark comparison point, and
+// msgpack lives in ./msgpack.ts - it is a benchmark comparison point, and
 // keeping it out of here is what makes the kit dependency-free.
 
 export function json(v: unknown): Buffer {

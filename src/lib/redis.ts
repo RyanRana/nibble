@@ -62,7 +62,7 @@ export async function configGet(r: Redis, key: string): Promise<string> {
  * and one of them changed real measurements:
  *
  *   hash-max-listpack-entries  was 128 here, is actually 512.  Harmless in
- *     practice — every case that cares sets its own threshold — but it meant
+ *     practice - every case that cares sets its own threshold - but it meant
  *     the row labelled "default" was not the default.
  *
  *   list-max-listpack-size     was 128 here, is actually -2.  NOT harmless.

@@ -13,11 +13,11 @@ import { encodeF32 } from '../lib/quantize.ts';
 export interface AgentCacheOpts {
   /** Namespace. Keys become `<prefix>:e:{shard}` etc. */
   prefix: string;
-  /** Expected live entries — shard count derives from it. */
+  /** Expected live entries - shard count derives from it. */
   capacity: number;
   /** Base TTL in seconds. */
   ttl: number;
-  /** Records per shard. See docs/tuning.md — sweep it. */
+  /** Records per shard. See docs/tuning.md - sweep it. */
   width?: number;
   /**
    * TTL jitter as a fraction, default 0.15. An entry's real TTL is
@@ -102,7 +102,7 @@ export class AgentCache {
     this.setRelease = str(await this.r.cmd('SCRIPT', 'LOAD', SET_AND_RELEASE));
   }
 
-  // ── key layout — note every key shares the {shard} tag ──────────────
+  // ── key layout - note every key shares the {shard} tag ──────────────
   private shardOf(key: string): number {
     return fnv1a(key) % this.shards;
   }
@@ -143,7 +143,7 @@ export class AgentCache {
     return v ? this.unpack(v) : null;
   }
 
-  /** Exact first — one round trip and it cannot be wrong. Then semantic. */
+  /** Exact first - one round trip and it cannot be wrong. Then semantic. */
   async get(key: string, embedding?: Float32Array): Promise<CacheResult> {
     const exact = await this.getExact(key);
     if (exact) {
@@ -158,7 +158,7 @@ export class AgentCache {
           this.stats.semantic++;
           return { kind: 'semantic', value: v, score: hit.score };
         }
-        // index entry outlived the value — clean it up rather than re-hitting it
+        // index entry outlived the value - clean it up rather than re-hitting it
         await this.r.raw('VREM', this.semanticKey(), hit.key);
       }
     }
@@ -245,7 +245,7 @@ export class AgentCache {
       return { kind: 'miss', value: packed && this.unpack(packed) };
     }
 
-    // someone else is computing — wait for them instead of duplicating the work
+    // someone else is computing - wait for them instead of duplicating the work
     this.stats.waited++;
     const deadline = Date.now() + this.leaseMs;
     let delay = 5;
@@ -266,7 +266,7 @@ export class AgentCache {
           this.stats.exact++;
           return { kind: 'exact', value: late };
         }
-        break; // genuinely abandoned — take over below
+        break; // genuinely abandoned - take over below
       }
     }
     // The holder died without publishing. Compute rather than fail the request.

@@ -10,7 +10,7 @@ import path from 'node:path';
 const dir = path.resolve(import.meta.dirname, '../../results');
 const benchPath = path.join(dir, 'bench.json');
 if (!fs.existsSync(benchPath)) {
-  console.error('run `node src/bench/run-all.ts` first — this model reads results/bench.json');
+  console.error('run `node src/bench/run-all.ts` first - this model reads results/bench.json');
   process.exit(1);
 }
 const bench = JSON.parse(fs.readFileSync(benchPath, 'utf8'));
@@ -190,7 +190,7 @@ const fmtG = (b: number) => `${(b / GiB).toFixed(1)} GiB`;
 const money = (n: number) =>
   n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 
-console.log(`\n\x1b[1m▸ Capacity & cost model — ${W.label}\x1b[0m`);
+console.log(`\n\x1b[1m▸ Capacity & cost model - ${W.label}\x1b[0m`);
 console.log(`  measured on Redis ${bench.redis}, allocator ${bench.allocator}\n`);
 
 console.log(
@@ -260,12 +260,12 @@ for (const c of configs) {
 console.log(`
   Read that ladder carefully: the headline $/GB understates a durable,
   replicated deployment by about 3×. Optimizing the layout is what buys that
-  multiplier back — the ${(naiveTotal / optTotal).toFixed(1)}× RAM reduction above is worth more than the
+  multiplier back - the ${(naiveTotal / optTotal).toFixed(1)}× RAM reduction above is worth more than the
   difference between any two vendors on the list.
 
   And note the structural constraint the pricing exposes: on ElastiCache,
   synchronous durability and SSD tiering are mutually exclusive, and tiering
-  costs ~300 µs on SSD hits. Cheap, durable, fast — pick two. Shrinking the
+  costs ~300 µs on SSD hits. Cheap, durable, fast - pick two. Shrinking the
   dataset is the only lever that does not force that choice.
 `);
 

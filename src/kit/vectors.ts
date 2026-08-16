@@ -40,7 +40,7 @@ export function decodeVector(b: Buffer, quant: Quant): Float32Array {
       return new Float32Array(copy.buffer, copy.byteOffset, copy.length / 4);
     }
     case 'binary':
-      throw new Error('binary codes are not invertible — compare with hamming(), do not decode');
+      throw new Error('binary codes are not invertible - compare with hamming(), do not decode');
   }
 }
 
@@ -55,7 +55,7 @@ export interface VectorSetOpts {
   quant?: 'Q8' | 'NOQUANT' | 'BIN';
   /**
    * HNSW connectivity. Default 16. The graph is a fixed ~758 B/vector at M=16,
-   * so at BIN it is 80% of your cost — dropping to M=8 saves ~150 B/vector and
+   * so at BIN it is 80% of your cost - dropping to M=8 saves ~150 B/vector and
    * is the only lever left once you have quantized.
    */
   m?: number;
@@ -64,7 +64,7 @@ export interface VectorSetOpts {
 }
 
 /**
- * Thin wrapper over Redis 8 Vector Sets (VADD/VSIM). Searchable — the HNSW
+ * Thin wrapper over Redis 8 Vector Sets (VADD/VSIM). Searchable - the HNSW
  * graph is included in the cost, unlike the raw-storage helpers above.
  */
 export class VectorMemory {
@@ -129,7 +129,7 @@ export class VectorMemory {
 /**
  * recall@k of your own pipeline against exact float32 cosine.
  *
- * Run this on YOUR embeddings before trusting any compression choice — ours
+ * Run this on YOUR embeddings before trusting any compression choice - ours
  * included. It is twenty lines and it is the difference between a saving and a
  * silent regression.
  */

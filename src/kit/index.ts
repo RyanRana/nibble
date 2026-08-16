@@ -1,5 +1,5 @@
 /**
- * █ nibble — layout primitives for Redis that make agent state small.
+ * █ nibble - layout primitives for Redis that make agent state small.
  *
  * Everything exported here is measured in `results/bench.json`. Nothing here is
  * clever; it is just the arrangement of bytes that the allocator happens to
@@ -8,7 +8,9 @@
 export { schema, uuid, enum_, varint, svarint, u8, str, blob, flags } from './schema.ts';
 export type { Codec, FieldType, Shape, Infer } from './schema.ts';
 
-export { Pouch, fnv1a } from './shard.ts';
+export { Pouch, fnv1a, shardCountFor, idFromField, genKeyFor } from './shard.ts';
+export { split, growTo, readGeneration, publishGeneration } from './reshard.ts';
+export type { SplitOpts, SplitResult, SplitProgress } from './reshard.ts';
 export type { ShardOpts } from './shard.ts';
 
 export { ShardedCache } from './cache.ts';
@@ -24,7 +26,7 @@ export type { AgentCacheOpts, CacheResult, CacheStats, HitKind } from './agent-c
 export type { Quant, VectorSetOpts } from './vectors.ts';
 
 // NOTE: client.ts also exports `str`/`num` reply helpers, deliberately NOT
-// re-exported here — `str()` in the public API is the schema field type.
+// re-exported here - `str()` in the public API is the schema field type.
 // Import them from './client.ts' directly if you need them.
 export { Client, isErr } from './client.ts';
 export type { Arg, Reply } from './client.ts';
@@ -43,7 +45,7 @@ async function configSet(r: Client, kv: Record<string, string | number>): Promis
  * The config the kit wants. Call once at startup.
  *
  * These are per-instance, not per-key, so they affect everything on the node.
- * Read `docs/tuning.md` before widening them past what your shards need —
+ * Read `docs/tuning.md` before widening them past what your shards need -
  * a huge listpack threshold turns unrelated small hashes into slow linear scans.
  */
 export async function applyKitConfig(

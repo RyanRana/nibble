@@ -1,5 +1,5 @@
 /**
- * CASE 03 — Tool-call spans / step traces.
+ * CASE 03 - Tool-call spans / step traces.
  *
  * This is the highest-cardinality record class in an agentic system. A single
  * long-horizon run emits hundreds of spans; a busy platform emits tens of
@@ -38,7 +38,7 @@ const DICT = makeDictionary(SPANS.slice(0, 40).flat().map((s) => json(s)));
 export const case03: BenchCase = {
   id: '03-spans',
   title: `Tool-call spans (${RUNS.toLocaleString()} runs × ${SPANS_PER_RUN} spans = ${TOTAL.toLocaleString()})`,
-  question: 'At tens of millions of spans a day, what does the framing tax cost — and what does retention save?',
+  question: 'At tens of millions of spans a day, what does the framing tax cost - and what does retention save?',
   unit: 'span',
 
   variants: [
@@ -145,7 +145,7 @@ export const case03: BenchCase = {
       encodingProbes: ['spans:{0}'],
     },
     {
-      caveat: 'lossy — retains 20 of 100 spans/run',
+      caveat: 'lossy - retains 20 of 100 spans/run',
       name: 'H · STREAM packed + MAXLEN 20 (retention)',
       note: 'Same 150,000 spans ingested, only the last 20 per run retained. Cost is per span *ingested*. Exact MAXLEN, not `~`: approximate trimming only fires at macro-node boundaries and would not trim a 100-entry stream at all.',
       load: async (r: Redis) => {
@@ -160,11 +160,11 @@ export const case03: BenchCase = {
       },
       probe: async (r) => ({
         'retained entries/run': await r.xlen(`trace:${RUN_IDS[0]}`),
-        'note': 'lossy by design — pair with an object-store archive',
+        'note': 'lossy by design - pair with an object-store archive',
       }),
     },
     {
-      caveat: 'lossy — retains 20 of 100 spans/run',
+      caveat: 'lossy - retains 20 of 100 spans/run',
       name: 'I · STREAM packed, MAXLEN 20, dict-deflate',
       note: 'Retention + compression together: the realistic hot-tier configuration.',
       load: async (r: Redis) => {

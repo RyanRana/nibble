@@ -37,7 +37,7 @@ export function startRedis(o: StartOpts): void {
   sh('docker', args);
 }
 
-/** SIGKILL — no shutdown hook, no final fsync, no chance to flush buffers. */
+/** SIGKILL - no shutdown hook, no final fsync, no chance to flush buffers. */
 export function killRedis(name: string): void {
   sh('docker', ['kill', '-s', 'KILL', name], true);
 }

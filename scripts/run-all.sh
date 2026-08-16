@@ -11,5 +11,6 @@ node src/proof/integrity.ts
 node src/proof/query.ts
 node src/proof/eviction.ts
 node src/proof/cache.ts
+node src/proof/reshard.ts
 node src/proof/durability.ts
-node src/proof/capacity.ts   # reads results/bench.json — must run last
+node src/proof/capacity.ts   # reads results/bench.json - must run last

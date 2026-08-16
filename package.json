@@ -19,7 +19,8 @@
     "smoke": "node src/kit/smoke.ts",
     "doctor": "node doctor.mjs",
     "proof:cache": "node src/proof/cache.ts",
-    "fix": "node doctor.mjs --fix"
+    "fix": "node doctor.mjs --fix",
+    "proof:reshard": "node src/proof/reshard.ts"
   },
   "bin": {
     "nibble": "./doctor.mjs"

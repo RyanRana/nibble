@@ -1,5 +1,5 @@
 /**
- * PROOF 02 — "Redis has no transactions, so you can't maintain invariants."
+ * PROOF 02 - "Redis has no transactions, so you can't maintain invariants."
  *
  * The objection is half right, and the half that's right is worth stating
  * plainly before knocking down the half that isn't:
@@ -13,7 +13,7 @@
  *   FALSE. "…therefore you cannot maintain invariants." Redis executes a Lua
  *          script as a single unit against a single-threaded core. No other
  *          command interleaves. That is strictly *stronger* isolation than the
- *          READ COMMITTED most people actually run Postgres at — it is
+ *          READ COMMITTED most people actually run Postgres at - it is
  *          effectively serializable, for the keys the script touches.
  *
  * So the correct statement is: Redis has no *interactive* transactions, and
@@ -32,13 +32,13 @@
  *
  * ── The layout synergy worth noticing ────────────────────────────────────
  *
- * The script mutates a *schema-packed binary record in place* — it patches the
+ * The script mutates a *schema-packed binary record in place* - it patches the
  * status byte and the version counter with string.byte/string.char without ever
  * decoding the other ~105 bytes. So the RAM optimization from case 01 does not
  * cost you server-side logic; it enables it, because there is no round trip.
  *
  * And because every key for a shard shares one `{hash tag}`, the whole script
- * touches a single cluster slot — so this stays correct on Redis Cluster, where
+ * touches a single cluster slot - so this stays correct on Redis Cluster, where
  * cross-slot multi-key operations are rejected.
  */
 import fs from 'node:fs';
@@ -72,7 +72,7 @@ const shardKey = (i: number) => `runs:{s${shardOf(i)}}`;
 const idxKey = (i: number, st: number) => `idx:{s${shardOf(i)}}:${st}`;
 const evtKey = (i: number) => `evt:{s${shardOf(i)}}`;
 
-/** record = [status:1][version:4 BE][payload:107] — same shape the codec emits. */
+/** record = [status:1][version:4 BE][payload:107] - same shape the codec emits. */
 function packed(status: number, version: number): Buffer {
   const b = Buffer.alloc(112);
   b[0] = status;
@@ -141,7 +141,7 @@ await main.flushall('SYNC');
 await main.set('counter', 'not-a-number');
 const multi = main.multi();
 multi.set('before', '1');
-multi.incr('counter'); // fails at runtime — wrong type
+multi.incr('counter'); // fails at runtime - wrong type
 multi.set('after', '1');
 const execRes = await multi.exec();
 const failedCmds = execRes!.filter(([e]) => e).length;
@@ -185,7 +185,7 @@ interface Outcome {
  *  - Longevity. Terminal transitions are rare (2%). An earlier version picked a
  *    terminal state 1 attempt in 3, so every run died within the first few
  *    hundred attempts and the remaining 19,000 were no-ops against frozen rows
- *    — which made the contention window far too short to be convincing.
+ *    - which made the contention window far too short to be convincing.
  */
 function plan(worker: number): { run: number; to: number }[] {
   const out: { run: number; to: number }[] = [];
@@ -266,7 +266,7 @@ async function strategyWatch(): Promise<Outcome> {
               .sadd(idxKey(run, to), String(run))
               .xadd(evtKey(run), '*', 'r', String(run), 'f', String(cur), 't', String(to))
               .exec();
-            if (res === null) { o.retries++; continue; } // WATCH tripped — retry
+            if (res === null) { o.retries++; continue; } // WATCH tripped - retry
             o.applied++;
             done = true;
           } catch { o.errors++; break; }
@@ -396,7 +396,7 @@ report.assert(
 report.assert(
   `WATCH/MULTI/EXEC holds the invariants: ${vsum(watch.v)} violations, at the cost of ${watch.o.retries} retries`,
   vsum(watch.v) === 0,
-  `optimistic concurrency works, but ${((watch.o.retries / (watch.o.applied + watch.o.retries)) * 100).toFixed(1)}% of attempts had to be redone — that is wasted work that grows with contention`,
+  `optimistic concurrency works, but ${((watch.o.retries / (watch.o.applied + watch.o.retries)) * 100).toFixed(1)}% of attempts had to be redone - that is wasted work that grows with contention`,
 );
 
 report.assert(
@@ -448,7 +448,7 @@ try {
   report.assert(
     `the same procedure loaded as a Redis Function library and executed via FCALL (returned ${fres})`,
     fres === 1 && flist.length > 0,
-    'Functions persist in the RDB/AOF and replicate to replicas — server-side logic becomes part of the database, not of whichever client happens to connect',
+    'Functions persist in the RDB/AOF and replicate to replicas - server-side logic becomes part of the database, not of whichever client happens to connect',
   );
 } catch (e: any) {
   report.assert('Redis Functions (FUNCTION LOAD / FCALL) available', false, String(e?.message));

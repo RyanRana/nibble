@@ -1,5 +1,5 @@
 /**
- * PROOF 04 — "You can only look things up by key, so it can't be a primary DB."
+ * PROOF 04 - "You can only look things up by key, so it can't be a primary DB."
  *
  * This was true in 2015. Redis 8 ships the Query Engine in the open-source
  * build: secondary indexes over HASH and JSON, with filtering, numeric ranges,
@@ -11,7 +11,7 @@
  *
  *   The Query Engine indexes KEYS MATCHING A PREFIX. The sharded-hash layout
  *   that produced the biggest RAM win in case 01 stores 128 runs inside ONE
- *   key — and the Query Engine cannot see inside that. Sharding and
+ *   key - and the Query Engine cannot see inside that. Sharding and
  *   FT.SEARCH are, straightforwardly, incompatible.
  *
  * So this proof measures the actual trade rather than hiding it, comparing
@@ -21,7 +21,7 @@
  *      index maintenance yourself, inside the same Lua script that does the
  *      state transition (proof 02), so it stays consistent.
  *   B. One hash per run + FT index. Full query language, much more RAM.
- *   C. HYBRID — the recommendation. Fat record in a sharded hash; a small
+ *   C. HYBRID - the recommendation. Fat record in a sharded hash; a small
  *      index-only document per run holding just the queryable fields. You pay
  *      for indexing the columns you actually filter on, not for indexing the
  *      whole record.
@@ -222,7 +222,7 @@ report.assert(
     bTenantFailed.n === TRUTH.tenantFailed &&
     bExpensive.n === TRUTH.expensive &&
     bOpusRunning.n === TRUTH.opusRunning,
-  'FT.SEARCH gives you a real query language — TAG filters, NUMERIC ranges, sorting, aggregation — over ordinary hashes',
+  'FT.SEARCH gives you a real query language - TAG filters, NUMERIC ranges, sorting, aggregation - over ordinary hashes',
 );
 
 // ── C · hybrid: fat record sharded, thin index document per run ──────────
@@ -240,7 +240,7 @@ before = await sample(r);
   );
   const cmds: any[] = [];
   DATA.forEach((run, i) => {
-    // the fat, packed record lives in a shared shard — invisible to the index
+    // the fat, packed record lives in a shared shard - invisible to the index
     cmds.push(['HSET', `run:{${i % SHARDS}}`, uuidToBytes(run.run_id), packRun(run)]);
     // …and a tiny document carries ONLY the columns we filter on
     cmds.push([
@@ -283,7 +283,7 @@ report.assert(
     cExpensive.n === TRUTH.expensive &&
     cOpusRunning.n === TRUTH.opusRunning &&
     cBytes < bBytes,
-  'index the four columns you filter on, not the twenty you store — the record itself stays packed and sharded',
+  'index the four columns you filter on, not the twenty you store - the record itself stays packed and sharded',
 );
 
 report.assert(
@@ -294,7 +294,7 @@ report.assert(
 );
 
 report.info(
-  `RAM per run — hand-rolled ${(aBytes / N).toFixed(0)} B · hybrid ${(cBytes / N).toFixed(0)} B · full FT index ${(bBytes / N).toFixed(0)} B`,
+  `RAM per run - hand-rolled ${(aBytes / N).toFixed(0)} B · hybrid ${(cBytes / N).toFixed(0)} B · full FT index ${(bBytes / N).toFixed(0)} B`,
 );
 report.info(
   'the honest limitation: FT.SEARCH indexes keys by prefix, so it cannot see inside a sharded hash. ' +

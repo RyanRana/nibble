@@ -1,13 +1,13 @@
 /**
- * CASE 07 — Secondary indexes (tag → runs, agent → runs, status → runs).
+ * CASE 07 - Secondary indexes (tag → runs, agent → runs, status → runs).
  *
  * If Redis is your primary store you need indexes, and indexes are pure
  * overhead: they hold no data of their own, only pointers. So their encoding
  * is the whole cost.
  *
  * The decisive variable is **id density**. Sets of opaque UUIDs are the worst
- * case. Dense integer ids unlock intsets, and — once a tag covers a meaningful
- * fraction of the id space — bitmaps, where a member costs a *bit*.
+ * case. Dense integer ids unlock intsets, and - once a tag covers a meaningful
+ * fraction of the id space - bitmaps, where a member costs a *bit*.
  * The crossover is measured here rather than asserted: a bitmap over a sparse
  * tag is worse than a set, and this case shows both sides of that line.
  */
@@ -119,7 +119,7 @@ export const case07: BenchCase = {
     },
     {
       name: 'E · BITMAP over the sparse id space (2% density)',
-      note: 'A bitmap costs the same 31 KiB per tag whether 2% or 100% of bits are set — it beats the plain sets here but loses to sharded intsets. This is the wrong side of the crossover.',
+      note: 'A bitmap costs the same 31 KiB per tag whether 2% or 100% of bits are set - it beats the plain sets here but loses to sharded intsets. This is the wrong side of the crossover.',
       load: async (r: Redis) => {
         for (let t = 0; t < TAGS; t++) {
           const cmds = MEMBERSHIP[t].map((id) => ['SETBIT', `tag:${t}`, String(id), '1']);
@@ -134,7 +134,7 @@ export const case07: BenchCase = {
       }),
     },
     {
-      caveat: 'different corpus — dense ids, not comparable to rows A–E',
+      caveat: 'different corpus - dense ids, not comparable to rows A-E',
       name: 'F · BITMAP over a dense id space (60% density)',
       note: `The other side of the crossover: 50 tags × ~60% of ${DENSE_SPACE.toLocaleString()} ids. A membership costs a bit.`,
       load: async (r: Redis) => {

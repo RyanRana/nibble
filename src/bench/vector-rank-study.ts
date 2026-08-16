@@ -1,5 +1,5 @@
 /**
- * VECTOR RANK STUDY — why most published quantization-recall numbers are wrong,
+ * VECTOR RANK STUDY - why most published quantization-recall numbers are wrong,
  * including the one this benchmark originally reported.
  *
  * ── How this file came to exist ──────────────────────────────────────────
@@ -11,8 +11,8 @@
  *
  * A sign-bit binary code keeps one bit per dimension. Whether that is enough
  * depends entirely on how much of the embedding space the data actually
- * occupies. If documents live on a low-dimensional manifold — a handful of
- * latent topics — then the top-10 neighbours are separated by wide margins, and
+ * occupies. If documents live on a low-dimensional manifold - a handful of
+ * latent topics - then the top-10 neighbours are separated by wide margins, and
  * one bit per dimension resolves them easily. If the data fills the space, the
  * top-10 are separated by hairline margins that a single bit cannot represent.
  *
@@ -51,13 +51,13 @@ const DIM = 1536;
 const NQ = 15;
 const K = 10;
 
-/** Ranks to sweep. `DIM` means "fills the space" — the hardest realistic case. */
+/** Ranks to sweep. `DIM` means "fills the space" - the hardest realistic case. */
 const RANKS = [8, 16, 32, 64, 128, 256, 768, DIM];
 
 /**
  * Effective rank via the participation ratio of the covariance spectrum,
  * estimated from the Gram matrix of a sample. A cheap, standard proxy:
- * (Σλ)² / Σλ² — equals r exactly for a flat rank-r spectrum.
+ * (Σλ)² / Σλ² - equals r exactly for a flat rank-r spectrum.
  */
 function effectiveRank(vs: Float32Array[], sampleSize = 600): number {
   const s = vs.slice(0, sampleSize);
@@ -128,7 +128,7 @@ for (const rank of RANKS) {
   // topicsPerDoc must scale WITH rank. Capping it (an earlier bug here) keeps
   // every document inside a k-dimensional subspace no matter how many basis
   // directions the corpus has, so the corpus never actually becomes full-rank
-  // and binary quantization never degrades — which is exactly the artifact this
+  // and binary quantization never degrades - which is exactly the artifact this
   // study exists to expose.
   const { vectors, queries } = makeEmbeddingCorpus(
     20260816 + rank, N, DIM, NQ,
@@ -181,11 +181,11 @@ const lowRank = rows.find((r) => r.rank === 16)!;
 const highRank = rows[rows.length - 1];
 console.log(
   `  Conclusion: binary-only recall falls from ${(lowRank.binary * 100).toFixed(1)}% at rank ${lowRank.rank} ` +
-    `to ${(highRank.binary * 100).toFixed(1)}% at full rank — a ${(lowRank.binary / Math.max(highRank.binary, 1e-9)).toFixed(1)}× swing ` +
+    `to ${(highRank.binary * 100).toFixed(1)}% at full rank - a ${(lowRank.binary / Math.max(highRank.binary, 1e-9)).toFixed(1)}× swing ` +
     `from the CORPUS alone, with the quantizer unchanged.`,
 );
 console.log(
-  `  int8 holds at ${(rows[0].int8 * 100).toFixed(1)}%–${(highRank.int8 * 100).toFixed(1)}% across the entire sweep. ` +
+  `  int8 holds at ${(rows[0].int8 * 100).toFixed(1)}%-${(highRank.int8 * 100).toFixed(1)}% across the entire sweep. ` +
     `That is the finding that generalizes.\n`,
 );
 

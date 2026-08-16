@@ -1,5 +1,5 @@
 /**
- * CASE 09 — The agent task queue, and the PEL you forgot about.
+ * CASE 09 - The agent task queue, and the PEL you forgot about.
  *
  * Two findings live here.
  *
@@ -7,7 +7,7 @@
  * pays the same framing tax as any other.
  *
  * The second is the one that actually pages people at 3am. A stream consumer
- * group keeps a Pending Entries List — one entry per delivered-but-unacked
+ * group keeps a Pending Entries List - one entry per delivered-but-unacked
  * message, holding the id, the consumer, a delivery timestamp and a counter.
  * If an agent crashes mid-tool-call, or a worker forgets to XACK, or you never
  * XAUTOCLAIM the dead ones, the PEL grows without bound *and it is not covered
@@ -62,7 +62,7 @@ function packTask(t: Task): Buffer {
 export const case09: BenchCase = {
   id: '09-queue',
   title: `Agent task queue (${N.toLocaleString()} tasks)`,
-  question: 'What does a queued task cost — and what does an un-acked one cost on top?',
+  question: 'What does a queued task cost - and what does an un-acked one cost on top?',
   unit: 'task',
 
   variants: [
@@ -139,7 +139,7 @@ export const case09: BenchCase = {
         const p = (await r.xpending('q', 'g')) as any[];
         return {
           'pending entries': p[0],
-          'covered by MAXLEN?': 'no — XTRIM does not shrink the PEL',
+          'covered by MAXLEN?': 'no - XTRIM does not shrink the PEL',
           'fix': 'XACK on success; XAUTOCLAIM + XACK for abandoned work',
         };
       },

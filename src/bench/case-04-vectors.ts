@@ -1,13 +1,13 @@
 /**
- * CASE 04 — Semantic memory (embeddings).
+ * CASE 04 - Semantic memory (embeddings).
  *
  * Usually the single largest line item. 1536-d float32 is 6 KiB of raw floats
  * per memory: 20M memories = 117 GiB before a byte of index or key overhead.
  *
  * Two separate questions, deliberately kept apart:
  *
- *   1. Storage  — what does it cost to *keep* the vector?
- *   2. Index    — what does it cost to *search* it? (HNSW graph links are not
+ *   1. Storage  - what does it cost to *keep* the vector?
+ *   2. Index    - what does it cost to *search* it? (HNSW graph links are not
  *                 free, and a benchmark that compares a bare string blob to an
  *                 indexed vector set without saying so is cheating.)
  *
@@ -30,14 +30,14 @@
  *
  * ── Two structural facts about Vector Sets that change the recommendation ─
  *
- * 1. Vector Sets DISCARD the full-precision vector on insert — `VEMB` returns
+ * 1. Vector Sets DISCARD the full-precision vector on insert - `VEMB` returns
  *    a dequantized approximation. There is therefore no rescoring path inside a
  *    vector set, so the binary→int8 rerank that rescues binary quantization
  *    elsewhere is not expressible here. Emulating it with a second key costs
  *    MORE than simply using Q8.
  * 2. `REDUCE`'s projection matrix is stored once per key at
  *    `input_dim × output_dim × 4` bytes. At the N=8,000 used here that is 393
- *    B/vector for 1536→512 — 24% of the total — but only 3 B/vector at N=1M.
+ *    B/vector for 1536→512 - 24% of the total - but only 3 B/vector at N=1M.
  *    The REDUCE rows below are therefore pessimistic by construction; judge
  *    them at production scale, not this one.
  */
@@ -59,7 +59,7 @@ const CORPUS = makeEmbeddingCorpus(20260816, N, DIM, NQ);
 const VECS = CORPUS.vectors;
 const QUERIES = CORPUS.queries;
 
-// Precompute quantized forms once — reused by both the loaders and the recall math.
+// Precompute quantized forms once - reused by both the loaders and the recall math.
 const F32 = VECS.map(encodeF32);
 const F16 = VECS.map(encodeF16);
 const I8 = VECS.map(encodeInt8);
@@ -71,7 +71,7 @@ const F16D = F16.map(decodeF16);
 const I8D = I8.map(decodeInt8);
 const QI8D = QI8.map(decodeInt8);
 
-/** Exact float32 cosine ground truth — computed once, shared by every measurement. */
+/** Exact float32 cosine ground truth - computed once, shared by every measurement. */
 let truthIdx: Set<number>[] | null = null;
 function truth(): Set<number>[] {
   if (!truthIdx) truthIdx = exactTopK(VECS, QUERIES, K);
@@ -125,7 +125,7 @@ export const case04: BenchCase = {
   variants: [
     {
       name: 'A · STRING, JSON array',
-      note: 'Storage only. The "we JSON.stringify()-ed the embedding" starting point — and it is a disaster.',
+      note: 'Storage only. The "we JSON.stringify()-ed the embedding" starting point - and it is a disaster.',
       load: async (r: Redis) => {
         await pipe(
           r,
@@ -163,7 +163,7 @@ export const case04: BenchCase = {
     },
     {
       name: 'E · STRING, binary (1 bit/dim)',
-      note: 'Storage only. 192 bytes. Recall is corpus-dependent to the point of being unquotable — see vector-rank-study.ts.',
+      note: 'Storage only. 192 bytes. Recall is corpus-dependent to the point of being unquotable - see vector-rank-study.ts.',
       caveat: 'binary recall is a rank artifact; real corpora do far worse',
       load: async (r: Redis) => {
         await pipe(r, BIN.map((b, i) => ['SET', `mem:${i}`, b]) as any, 100);
@@ -176,7 +176,7 @@ export const case04: BenchCase = {
     },
     {
       name: 'F · sharded HASH, int8',
-      note: 'Storage only. int8 vectors packed into shared hashes — removes the per-key overhead too.',
+      note: 'Storage only. int8 vectors packed into shared hashes - removes the per-key overhead too.',
       config: { 'hash-max-listpack-entries': 0 },
       load: async (r: Redis) => {
         const shards = Math.ceil(N / 512);
@@ -191,7 +191,7 @@ export const case04: BenchCase = {
     },
     {
       name: 'G · VECTOR SET, NOQUANT (f32)',
-      note: 'Searchable. Full float32 in an HNSW graph — this row is where the index cost becomes visible.',
+      note: 'Searchable. Full float32 in an HNSW graph - this row is where the index cost becomes visible.',
       load: vaddAll('vs', F32, ['NOQUANT']),
       encodingProbes: [],
       probe: async (r) => ({
@@ -208,14 +208,14 @@ export const case04: BenchCase = {
     },
     {
       name: 'I · VECTOR SET, BIN',
-      note: 'Searchable. 1 bit per dimension. Note Redis does NOT rerank internally — the source vector is discarded, so there is nothing to rerank against.',
+      note: 'Searchable. 1 bit per dimension. Note Redis does NOT rerank internally - the source vector is discarded, so there is nothing to rerank against.',
       caveat: 'no rescoring path exists; Redis measures 35.5% on real Word2Vec',
       load: vaddAll('vs', F32, ['BIN']),
       probe: async (r) => ({ 'quant': 'bin', 'recall@10 (VSIM)': await vsimRecall(r, 'vs') }),
     },
     {
       name: 'J · VECTOR SET, REDUCE 512 + Q8',
-      note: 'Searchable. Projection to 512-d before quantizing. Despite the docs saying "random projection", the implementation is a deterministic truncated Walsh–Hadamard transform — so it is reproducible across replicas, but the Johnson–Lindenstrauss distortion bound does not formally apply.',
+      note: 'Searchable. Projection to 512-d before quantizing. Despite the docs saying "random projection", the implementation is a deterministic truncated Walsh-Hadamard transform - so it is reproducible across replicas, but the Johnson-Lindenstrauss distortion bound does not formally apply.',
       caveat: 'projection matrix is 24% of this figure at N=8k, ~0.2% at N=1M',
       load: async (r: Redis) => {
         const cmds = F32.map((b, i) => ['VADD', 'vs', 'REDUCE', '512', 'FP32', b, `v${i}`, 'Q8']);
@@ -229,7 +229,7 @@ export const case04: BenchCase = {
     },
     {
       name: 'K · VECTOR SET, REDUCE 256 + BIN',
-      note: 'Searchable, maximally squeezed — and a negative result: it is LARGER than plain BIN, because at 256 dims the projection matrix costs more than the dimensions it saves. Once you reach BIN, the HNSW graph is 80% of the cost and further vector compression is pointless.',
+      note: 'Searchable, maximally squeezed - and a negative result: it is LARGER than plain BIN, because at 256 dims the projection matrix costs more than the dimensions it saves. Once you reach BIN, the HNSW graph is 80% of the cost and further vector compression is pointless.',
       caveat: 'larger than plain BIN at this N; quality cliff',
       load: async (r: Redis) => {
         const cmds = F32.map((b, i) => ['VADD', 'vs', 'REDUCE', '256', 'FP32', b, `v${i}`, 'BIN']);

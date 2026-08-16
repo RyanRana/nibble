@@ -2,7 +2,7 @@
  * Schema DSL for packed binary records.
  *
  * JSON ships field names once per record; a schema ships them zero times.
- * Add fields at the END and bump `version` — see docs/packing.md.
+ * Add fields at the END and bump `version` - see docs/packing.md.
  */
 import { Writer, Reader, uuidToBytes, bytesToUuid } from '../lib/codec.ts';
 
@@ -11,7 +11,7 @@ export interface FieldType<T> {
   kind: string;
   write: (w: Writer, v: T) => void;
   read: (r: Reader) => T;
-  /** Rough bytes for a typical value — used by `describe()`, never for encoding. */
+  /** Rough bytes for a typical value - used by `describe()`, never for encoding. */
   typical: number;
 }
 
@@ -46,7 +46,7 @@ export function varint(): FieldType<number> {
   return { kind: 'varint', write: (w, v) => w.varint(v), read: (r) => r.varint(), typical: 2 };
 }
 
-/** ZigZag varint — use for deltas, where small negatives must stay 1 byte. */
+/** ZigZag varint - use for deltas, where small negatives must stay 1 byte. */
 export function svarint(): FieldType<number> {
   return { kind: 'svarint', write: (w, v) => w.svarint(v), read: (r) => r.svarint(), typical: 2 };
 }
@@ -55,7 +55,7 @@ export function u8(): FieldType<number> {
   return { kind: 'u8', write: (w, v) => w.u8(v), read: (r) => r.u8(), typical: 1 };
 }
 
-/** Length-prefixed UTF-8. The only variable-cost field — keep them rare. */
+/** Length-prefixed UTF-8. The only variable-cost field - keep them rare. */
 export function str(): FieldType<string> {
   return { kind: 'str', write: (w, v) => w.str(v), read: (r) => r.str(), typical: 24 };
 }
@@ -96,7 +96,7 @@ export type Infer<S extends Shape> = { [K in keyof S]: S[K] extends FieldType<in
 export interface Codec<S extends Shape> {
   encode: (v: Infer<S>) => Buffer;
   decode: (b: Buffer) => Infer<S>;
-  /** Reads ONLY the version byte — cheap enough to call on every record. */
+  /** Reads ONLY the version byte - cheap enough to call on every record. */
   versionOf: (b: Buffer) => number;
   /** Estimated bytes for a typical record. For sizing, not for billing. */
   typical: number;
@@ -127,7 +127,7 @@ export function schema<S extends Shape>(shape: S, opts: SchemaOpts = {}): Codec<
       r.u8();
       const out = {} as Infer<S>;
       for (const [name, f] of entries) {
-        if (r.exhausted()) break; // older record — trailing fields stay undefined
+        if (r.exhausted()) break; // older record - trailing fields stay undefined
 
         (out as any)[name] = f.read(r);
       }

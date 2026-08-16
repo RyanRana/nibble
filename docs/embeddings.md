@@ -19,7 +19,7 @@ await mem.search(queryVector, 10);
 **Use `Q8`.** That single word is the most load-bearing thing on this page:
 int8 held 98.7–100% recall across a full sweep of corpus difficulty, while
 binary ranged from 83% down to 32% on identical code. And never store an
-embedding as a JSON array — it is 18× worse than int8.
+embedding as a JSON array - it is 18× worse than int8.
 
 ---
 
@@ -67,7 +67,7 @@ code in this repo. Both were close to meaningless.
 
 A sign-bit code keeps one bit per dimension. Whether that's enough depends
 entirely on how much of the embedding space your data actually occupies. If
-documents sit on a low-dimensional manifold — a handful of latent topics — then
+documents sit on a low-dimensional manifold - a handful of latent topics - then
 the top-10 neighbours are separated by wide margins and one bit resolves them
 easily. If the data fills the space, the top-10 are separated by hairline
 margins a single bit cannot represent.
@@ -90,7 +90,7 @@ Same code. Same quantizer. Only the corpus's intrinsic rank changes:
 
 Our 83% was a rank-16 artifact.
 
-At rank 768 the same code measures **34.7%** — within a point of Redis's own
+At rank 768 the same code measures **34.7%** - within a point of Redis's own
 published **35.5%** for Vector Sets `BIN` on real Word2Vec embeddings. Real text
 corpora live in that regime.
 
@@ -106,7 +106,7 @@ corpora live in that regime.
 | Relative contrast of real text embeddings | 1.75–2.05 |
 
 That gist-960 row is the one to remember. A 960-dimensional dataset scoring
-**zero** — because GIST descriptors are non-negative, so nearly every sign bit
+**zero** - because GIST descriptors are non-negative, so nearly every sign bit
 is 1. Dimension count does not save you.
 
 **int8 held 98.7–100% across the entire sweep.** That is the finding that
@@ -118,7 +118,7 @@ generalizes, and it matches every published source.
 
 **1. The full-precision vector is destroyed on insert.** `VEMB` returns a
 dequantized approximation. So there is **no rescoring path inside a vector
-set** — the binary→int8 rerank that rescues binary quantization elsewhere cannot
+set** - the binary→int8 rerank that rescues binary quantization elsewhere cannot
 be expressed.
 
 Emulating it with a second key costs more than just using Q8:
@@ -131,8 +131,8 @@ BIN vector set + external int8 for rescore ≈ 1.125·dim + 822 = 2,550 B
 It never wins. Algebraically.
 
 **2. `REDUCE` is not a random projection**, despite the docs saying so. The
-implementation is a deterministic truncated Walsh–Hadamard transform — which
-means it reproduces identically across replicas, but the Johnson–Lindenstrauss
+implementation is a deterministic truncated Walsh-Hadamard transform - which
+means it reproduces identically across replicas, but the Johnson-Lindenstrauss
 distortion bound does not formally apply. Treat its recall as something to
 measure, not assume.
 
@@ -167,7 +167,7 @@ Two consequences people miss:
   dims binary barely beats int8 at all.
 - **Once you're at binary, further vector compression is pointless.** That's why
   `REDUCE 256 + BIN` (985 B) came out *larger* than plain `BIN` (947 B). The only
-  lever left is `M` — dropping to `M=8` saves ~150 B/vector.
+  lever left is `M` - dropping to `M=8` saves ~150 B/vector.
 
 ---
 
@@ -198,7 +198,7 @@ const recall = await measureRecall(
 ```
 
 Report it next to any compression ratio you quote. Also report your corpus's
-**relative contrast** or effective rank — without one of those, a recall number
+**relative contrast** or effective rank - without one of those, a recall number
 can't be compared to anyone else's.
 
 ---
@@ -210,7 +210,7 @@ can't be compared to anyone else's.
 2. **Do not use `BIN` in Vector Sets for production retrieval.** Symmetric
    sign-hashing with no centering or rotation, and no rescoring path.
 3. **Never store embeddings as JSON.** 18× worse than int8.
-4. **Consider Matryoshka truncation** if your model supports it — 1536→512
+4. **Consider Matryoshka truncation** if your model supports it - 1536→512
    typically costs 1–5% NDCG@10 and shrinks both the index *and* the source copy.
 5. **Watch for double storage.** The Query Engine keeps the source vector in the
    keyspace *and* the index copy, and rebuilds the index from the keyspace on

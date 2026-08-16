@@ -20,7 +20,7 @@ Span.encode(span);   // ~25 B.  The same object as JSON: ~250 B.
 ```
 
 Add new fields at the **end** and bump `version`; old and new readers both keep
-working. Never reorder or remove — see [changing a schema](#changing-a-schema-without-an-outage).
+working. Never reorder or remove - see [changing a schema](#changing-a-schema-without-an-outage).
 
 ---
 
@@ -34,10 +34,10 @@ A twenty-field agent run, as JSON:
 
 577 bytes. Of which:
 
-- ~180 B — field names, repeated on every single record
-- ~200 B — five UUIDs as 36 hex characters each, when they are 16 bytes of entropy
-- ~60 B  — quotes, braces, colons, commas
-- ~110 B — actual information
+- ~180 B - field names, repeated on every single record
+- ~200 B - five UUIDs as 36 hex characters each, when they are 16 bytes of entropy
+- ~60 B  - quotes, braces, colons, commas
+- ~110 B - actual information
 
 Encodings, same record:
 
@@ -48,7 +48,7 @@ Encodings, same record:
 | JSON + dictionary-deflate | 198 | 2.9× |
 | **schema-packed** | **111** | **5.2×** |
 
-MessagePack helps a little — it drops the quotes, braces and commas — but still
+MessagePack helps a little - it drops the quotes, braces and commas - but still
 ships every field name, so it lands roughly halfway. Compression helps a lot *if*
 you prime it with a dictionary (see below). Schema packing wins because it stores
 the names zero times.
@@ -83,10 +83,10 @@ Run.describe();       // field table with typical sizes
 
 | Type | Bytes | Use for |
 |---|--:|---|
-| `uuid()` | 16 | any UUID string — 2.25× off the top |
+| `uuid()` | 16 | any UUID string - 2.25× off the top |
 | `enum_([…])` | 1 | status, model, region, tool name. ≤255 members |
 | `varint()` | 1–5 | counts, tokens, timestamps. 1 B under 128 |
-| `svarint()` | 1–5 | **deltas** — zigzag keeps small negatives at 1 B |
+| `svarint()` | 1–5 | **deltas** - zigzag keeps small negatives at 1 B |
 | `u8()` | 1 | small bounded ints |
 | `flags([…])` | 1 | up to 8 booleans. Eight JSON bools cost ~90 B |
 | `str()` | 1 + len | the only variable-cost field. Keep them rare |
@@ -109,7 +109,7 @@ const Span = schema({
 ```
 
 **Fold booleans and small enums into one byte.** `flags()` does eight. If you
-also have a 0–7 retry counter, pack it into the spare bits yourself — see
+also have a 0–7 retry counter, pack it into the spare bits yourself - see
 `packSpan` in `src/lib/codec.ts`, which puts `ok`, `cache_hit` and a 3-bit
 retry count into a single byte.
 
@@ -125,7 +125,7 @@ This is the part people skip and then regret.
 // v1, in production
 const Run = schema({ run_id: uuid(), status: enum_([...]) });
 
-// v2 — new field appended, version bumped
+// v2 - new field appended, version bumped
 const Run = schema({
   run_id: uuid(),
   status: enum_([...]),
@@ -149,7 +149,7 @@ Verified in `src/kit/smoke.ts`:
 - Reorder fields. The reader positionally misinterprets everything after the
   swap, silently, with no error.
 - Remove a field. Append a replacement and ignore the old one.
-- Reorder or remove `enum_` members. Insert new members at the end only —
+- Reorder or remove `enum_` members. Insert new members at the end only -
   the index *is* the wire format.
 - Widen `flags()` past 8. Add a second `flags()` field.
 
@@ -165,7 +165,7 @@ packing has removed the redundancy, there is nothing left for a compressor:
 ```
 packed              111 B
 packed + zstd       111 B    (no change, sometimes worse)
-packed + dict       113 B    (worse — frame overhead)
+packed + dict       113 B    (worse - frame overhead)
 ```
 
 Compression wins where packing can't reach: **prose**.
@@ -177,13 +177,13 @@ Compression wins where packing can't reach: **prose**.
 | per-turn zstd | 934 |
 | **per-turn dictionary-deflate** | **595** |
 
-`list-compress-depth 1` is worth remembering — Redis LZF-compresses interior
+`list-compress-depth 1` is worth remembering - Redis LZF-compresses interior
 quicklist nodes and leaves the head and tail hot. Zero code change.
 
 Note `list-max-listpack-size` defaults to **-2**, which is a *size* cap (8 KiB
 per quicklist node), not an entry count. With ~1.2 KiB turns that is ~6 turns
 per node. A positive value switches it to counting entries instead, and the two
-regimes give materially different memory for the same data — an earlier version
+regimes give materially different memory for the same data - an earlier version
 of this benchmark had the wrong default here and reported 1,150 B for the row
 above. Check which regime you are in before tuning it.
 
@@ -191,7 +191,7 @@ above. Check which regime you are in before tuning it.
 
 A 300-byte record has no history for a compressor to back-reference, so zstd
 often makes it *bigger*. A preset dictionary hands the compressor a prebuilt
-history — your field names, your enum values, your URL prefixes — so the very
+history - your field names, your enum values, your URL prefixes - so the very
 first byte can be a back-reference.
 
 ```ts
@@ -213,8 +213,8 @@ zlib caps dictionaries at 32 KiB and uses the tail if you pass more.
 ## Reality check on our numbers
 
 The compression figures here are measured on text Zipf-sampled from a
-20,000-word vocabulary. That has *more* entropy than real prose — no syntax, no
-phrase repetition, no shared sentence structure — so real transcripts should
+20,000-word vocabulary. That has *more* entropy than real prose - no syntax, no
+phrase repetition, no shared sentence structure - so real transcripts should
 compress **better** than these numbers, not worse.
 
 An earlier version of this benchmark used a 60-word lexicon and reported 4.9:1

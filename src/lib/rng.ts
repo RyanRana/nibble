@@ -1,7 +1,7 @@
 /** Deterministic PRNG + synthetic agentic workload data. */
 import fs from 'node:fs';
 
-/** mulberry32 — small, fast, good enough distribution for payload synthesis. */
+/** mulberry32 - small, fast, good enough distribution for payload synthesis. */
 export function rng(seed: number): () => number {
   let a = seed >>> 0;
   return function () {
@@ -20,7 +20,7 @@ export function intBetween(r: () => number, lo: number, hi: number): number {
   return lo + Math.floor(r() * (hi - lo + 1));
 }
 
-/** RFC-4122-shaped id (36 chars) — what most agent frameworks actually store. */
+/** RFC-4122-shaped id (36 chars) - what most agent frameworks actually store. */
 export function uuidLike(r: () => number): string {
   const hex = '0123456789abcdef';
   let s = '';
@@ -138,7 +138,7 @@ export function makeSpan(r: () => number, runId: string, step: number): ToolSpan
  *
  * So: a 20,000-word vocabulary drawn from the system word list, sampled with a
  * Zipf distribution (α≈1.07, roughly what natural language shows). This is
- * *harder* to compress than real prose, not easier — Zipf-sampled words have no
+ * *harder* to compress than real prose, not easier - Zipf-sampled words have no
  * syntax, no phrase-level repetition and no shared sentence structure for a
  * compressor to exploit. Every compression number in this repo is therefore a
  * conservative lower bound on what real transcripts would achieve.
@@ -217,16 +217,16 @@ export function makeTurn(r: () => number, i: number, words: number): Turn {
  * This generator matters more than it looks. Two tempting shortcuts both
  * produce dishonest recall numbers:
  *
- *   uniform random vectors      — near-orthogonal in 1536-d, so every pair is
+ *   uniform random vectors      - near-orthogonal in 1536-d, so every pair is
  *                                 equidistant and every quantizer scores ~100%.
- *   tight clusters + iid noise  — the top-10 neighbours then differ *only* by
+ *   tight clusters + iid noise  - the top-10 neighbours then differ *only* by
  *                                 high-frequency noise, so every lossy method
  *                                 scores ~0%, which is equally wrong.
  *
  * Real embeddings live on a low-dimensional manifold: documents are mixtures of
  * a limited number of latent topics, similarity falls off smoothly, and the
  * top-10 neighbours are genuinely closer than the bulk. So: a low-rank topic
- * model — each vector is a sparse, heavy-tailed mixture of `rank` random basis
+ * model - each vector is a sparse, heavy-tailed mixture of `rank` random basis
  * directions plus a little noise, then L2-normalized.
  *
  * `describeCorpus` reports the resulting similarity distribution so the corpus
@@ -251,7 +251,7 @@ function normalize(v: Float32Array): Float32Array {
 
 export interface Corpus {
   vectors: Float32Array[];
-  /** Queries are perturbed documents — "find memories like this one". */
+  /** Queries are perturbed documents - "find memories like this one". */
   queries: Float32Array[];
 }
 
@@ -300,7 +300,7 @@ export function makeEmbeddingCorpus(
   return { vectors, queries };
 }
 
-/** Similarity distribution of a corpus — the sanity check on the generator. */
+/** Similarity distribution of a corpus - the sanity check on the generator. */
 export function describeCorpus(
   vectors: Float32Array[],
   queries: Float32Array[],

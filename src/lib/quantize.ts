@@ -133,7 +133,7 @@ export function topK(scores: Float64Array, k: number): number[] {
 
 /**
  * Exact float32 cosine top-k per query. Computed once and reused by every
- * quantizer's recall measurement — it is by far the most expensive step, and
+ * quantizer's recall measurement - it is by far the most expensive step, and
  * recomputing it per variant would dominate the benchmark's runtime.
  */
 export function exactTopK(

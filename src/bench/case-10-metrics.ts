@@ -1,5 +1,5 @@
 /**
- * CASE 10 — Per-agent telemetry: latency, token spend, cost.
+ * CASE 10 - Per-agent telemetry: latency, token spend, cost.
  *
  * Agentic platforms emit a lot of numbers-over-time: p95 tool latency per
  * agent, tokens per minute per tenant, cost per run. Stored as a ZSET or a
@@ -63,7 +63,7 @@ const DATA_FLOAT: Float64Array[] = (() => {
   });
 })();
 
-/** Same series resampled to pure noise — the adversarial input for compression. */
+/** Same series resampled to pure noise - the adversarial input for compression. */
 const NOISE: Float64Array[] = (() => {
   const r = rng(SEED + 9);
   return Array.from({ length: SERIES }, () => {
@@ -209,7 +209,7 @@ export const case10: BenchCase = {
     },
     {
       name: 'F2 · TIMESERIES, COMPRESSED (pure noise)',
-      note: 'Adversarial control: incompressible values. The honest worst case — nothing here is autocorrelated.',
+      note: 'Adversarial control: incompressible values. The honest worst case - nothing here is autocorrelated.',
       load: async (r: Redis) => {
         for (let s = 0; s < SERIES; s++) {
           await r.call('TS.CREATE', `lat:${s}`, 'ENCODING', 'COMPRESSED', 'CHUNK_SIZE', '4096');
@@ -229,7 +229,7 @@ export const case10: BenchCase = {
       },
     },
     {
-      caveat: 'lossy — raw retained 24h, then hourly averages only',
+      caveat: 'lossy - raw retained 24h, then hourly averages only',
       name: 'G · TIMESERIES compressed + 1h downsample rule',
       note: 'Raw kept 24h, hourly aggregates kept a year. The retention lever, expressed as config.',
       load: async (r: Redis) => {

@@ -16,7 +16,7 @@ await applySafeEviction(redis, 8 * 1024 ** 3);   // volatile-ttl + a memory ceil
 ```
 appendonly yes
 appendfsync everysec              # or `always` if you cannot lose ~2 s
-no-appendfsync-on-rewrite no      # audit this — `yes` silently defeats `always`
+no-appendfsync-on-rewrite no      # audit this - `yes` silently defeats `always`
 maxmemory-policy volatile-ttl     # durable records carry no TTL, so cannot be evicted
 maxmemory-clients 5%              # default 0 = unlimited = a real outage path
 ```
@@ -54,16 +54,16 @@ came back:
 
 There are two crashes and they have different answers.
 
-**Process loss** — segfault, OOM killer, container killed, pod evicted. The
+**Process loss** - segfault, OOM killer, container killed, pod evicted. The
 kernel survives, so anything Redis has `write(2)`-ed is already in the page
 cache and still lands on disk. `everysec` loses **nothing** here, because the
 `everysec` window is an *fsync* window, not a `write()` window.
 
-**Machine loss** — power failure, kernel panic, instance vanishing. The page
+**Machine loss** - power failure, kernel panic, instance vanishing. The page
 cache goes with it. Now the fsync window is real.
 
 `docker kill -s KILL` reproduces process loss exactly. Nothing running inside a
-healthy kernel can reproduce machine loss — so we measured the window instead of
+healthy kernel can reproduce machine loss - so we measured the window instead of
 asserting it.
 
 `WAITAOF` blocks until a write is fsynced but does **not** trigger an fsync. So
@@ -81,7 +81,7 @@ Plan for ~2 s and watch `aof_delayed_fsync`.
 ### Two traps
 
 **`no-appendfsync-on-rewrite yes`** degrades you to `appendfsync no` during
-every AOF rewrite — and it returns *before* the `always` branch, so it defeats
+every AOF rewrite - and it returns *before* the `always` branch, so it defeats
 `appendfsync always` entirely. Audit this.
 
 **`WAITAOF` under `everysec`** collapsed to **201 ops/s**, because each call
@@ -92,7 +92,7 @@ pattern sustained ~138k ops/s.
 ### Recovery
 
 500,000 records reloaded from the AOF in **0.28 s**. Reload is single-threaded
-and roughly linear in dataset size — budget your RTO from that rate, and keep a
+and roughly linear in dataset size - budget your RTO from that rate, and keep a
 replica if the number it gives you is too slow.
 
 ### What we're not claiming
@@ -147,8 +147,8 @@ next quarter.
 
 ### Budget against the instance, not your records
 
-At the eviction boundary, **41% of `used_memory` was overhead** — key dict,
-client buffers, replication backlog — not values. And `maxmemory-clients`
+At the eviction boundary, **41% of `used_memory` was overhead** - key dict,
+client buffers, replication backlog - not values. And `maxmemory-clients`
 defaults to `0` (unlimited), so one slow consumer's output buffer can push a
 healthy dataset into eviction without your data growing at all.
 
@@ -162,7 +162,7 @@ it. It gives you batching and isolation, not atomicity of effect. Do not build
 invariants on it.
 
 The other half is wrong. Redis runs a Lua script as a single unit against a
-single-threaded core — stronger isolation than the READ COMMITTED most people
+single-threaded core - stronger isolation than the READ COMMITTED most people
 actually run Postgres at.
 
 ```bash
@@ -177,7 +177,7 @@ node src/proof/integrity.ts
 | `WATCH`/`MULTI`/`EXEC` | 0 | 285 | 23.5 ms |
 | **Lua procedure** | **0** | **0** | 11.3 ms |
 
-Read-modify-write — what most teams actually ship — corrupted the store:
+Read-modify-write - what most teams actually ship - corrupted the store:
 mismatched indexes, runs in the wrong number of index sets, lost version bumps.
 
 ### Validation the client cannot bypass
@@ -207,20 +207,20 @@ local cur = string.byte(rec, 1)
 local patched = string.char(nxt) .. version_bytes .. string.sub(rec, 6)
 ```
 
-The RAM optimization doesn't cost you server-side logic — it *enables* it,
+The RAM optimization doesn't cost you server-side logic - it *enables* it,
 because there's no round trip. And because every key for a shard shares one
 `{hash tag}`, the whole script touches a single cluster slot and stays correct
 under Redis Cluster.
 
 Load it as a **Redis Function** and it persists in the RDB/AOF and replicates to
-replicas — server-side logic becomes part of the database rather than part of
+replicas - server-side logic becomes part of the database rather than part of
 whichever client happens to connect.
 
 ---
 
 ## Querying
 
-**Obsolete objection** — Redis 8 ships the Query Engine in the open-source
+**Obsolete objection** - Redis 8 ships the Query Engine in the open-source
 build. But there's a real tension with [sharding](records.md) worth stating
 plainly: **`FT.SEARCH` indexes keys by prefix and cannot see inside a hash.**
 
@@ -256,7 +256,7 @@ FT.CREATE idx:ix ON HASH PREFIX 1 ix: SCHEMA
 the four columns you filter on, not the twenty you store.
 
 If you don't need a query language, hand-rolled inverted indexes are cheaper
-still — `SINTERCARD` and `ZCOUNT` do the set algebra server-side, and the
+still - `SINTERCARD` and `ZCOUNT` do the set algebra server-side, and the
 per-shard fan-out pipelines into one round trip.
 
 ---
@@ -270,7 +270,7 @@ has been. Tiered storage is commercial-only; the managed SSD tiers add roughly
 The pricing exposes a constraint worth designing around: on ElastiCache,
 **synchronous durability and data tiering are mutually exclusive.**
 
-Cheap, durable, fast — pick two.
+Cheap, durable, fast - pick two.
 
 Shrinking the dataset is the only lever that doesn't force the choice, which is
 the entire argument for the rest of this repo.

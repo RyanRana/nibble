@@ -2,7 +2,7 @@
  * Memory measurement harness.
  *
  * used_memory minus client/AOF/replication buffers, after MEMORY PURGE, on a
- * flushed instance. NOT used_memory_dataset — Redis counts the key dict as
+ * flushed instance. NOT used_memory_dataset - Redis counts the key dict as
  * "overhead", which is exactly what sharding attacks. See docs/measuring.md.
  */
 import type Redis from 'ioredis';
@@ -12,7 +12,7 @@ export interface MemSample {
   used_memory: number;
   attributable: number;
   clients: number;
-  /** allocator_frag_ratio — the true external fragmentation metric.
+  /** allocator_frag_ratio - the true external fragmentation metric.
    *  mem_fragmentation_ratio is NOT this: it also folds in process overheads. */
   allocatorFrag: number;
   keys: number;
@@ -75,14 +75,14 @@ export interface Variant {
   config?: Record<string, string | number>;
   /** Loads the data. Returns how many logical records were stored. */
   load: (r: Redis) => Promise<number>;
-  /** Keys to report OBJECT ENCODING for — proves *why* the number is what it is. */
+  /** Keys to report OBJECT ENCODING for - proves *why* the number is what it is. */
   encodingProbes?: string[];
   /** Extra facts to record (recall@10, false-positive rate, ratios, …). */
   probe?: (r: Redis) => Promise<Record<string, string | number>>;
   /**
    * Set when the variant does NOT answer the same question as the baseline
    * (lossy retention, cardinality-only, probabilistic membership). Such rows
-   * are excluded from "best result" rankings — otherwise HyperLogLog wins every
+   * are excluded from "best result" rankings - otherwise HyperLogLog wins every
    * comparison by answering a different question very cheaply.
    */
   caveat?: string;
@@ -157,9 +157,9 @@ export interface BenchCase {
   /** What one "record" means here (per run, per turn, per vector, …). */
   unit: string;
   /**
-   * 'compare' — variants are alternative designs for the same job, so
+   * 'compare' - variants are alternative designs for the same job, so
    *             variant[0] is the baseline and ratios are meaningful.
-   * 'sweep'   — variants are points on an axis (value size, density) and
+   * 'sweep'   - variants are points on an axis (value size, density) and
    *             ratios between them are meaningless.
    */
   kind?: 'compare' | 'sweep';
@@ -193,6 +193,6 @@ export function fmtBytes(n: number): string {
 
 /** Reduction factor of the best (last-listed baseline vs each variant). */
 export function factor(baseline: number, variant: number): string {
-  if (variant <= 0) return '—';
+  if (variant <= 0) return '-';
   return `${(baseline / variant).toFixed(2)}×`;
 }

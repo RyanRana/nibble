@@ -2,7 +2,7 @@
  * A Redis client, so nibble needs no npm install.
  *
  * RESP2 over TCP/TLS, AUTH, SELECT, pipelining. No cluster redirection, pub/sub
- * or reconnect — every primitive accepts anything exposing cmd/pipeline.
+ * or reconnect - every primitive accepts anything exposing cmd/pipeline.
  * doctor.mjs carries its own copy on purpose: it must stay one file.
  */
 import net from 'node:net';
@@ -157,7 +157,7 @@ export class Client {
     });
   }
 
-  /** Bounded chunks — an unbounded batch balloons client buffers. */
+  /** Bounded chunks - an unbounded batch balloons client buffers. */
   async pipelineChunked(cmds: Arg[][], size = 1000): Promise<void> {
     for (let i = 0; i < cmds.length; i += size) {
       const res = await this.pipeline(cmds.slice(i, i + size));

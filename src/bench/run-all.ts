@@ -65,7 +65,7 @@ printSummary(results);
 
 function renderMarkdown(p: { redis: string; allocator: string; generatedAt: string; results: CaseResult[] }): string {
   const L: string[] = [];
-  L.push(`# Redis RAM benchmark — raw results`);
+  L.push(`# Redis RAM benchmark - raw results`);
   L.push('');
   L.push(`Redis ${p.redis} · allocator \`${p.allocator}\` · generated ${p.generatedAt}`);
   L.push('');
@@ -76,7 +76,7 @@ function renderMarkdown(p: { redis: string; allocator: string; generatedAt: stri
   L.push('');
 
   for (const c of p.results) {
-    L.push(`## ${c.id} — ${c.title}`);
+    L.push(`## ${c.id} - ${c.title}`);
     L.push('');
     L.push(`> ${c.question}`);
     L.push('');
@@ -89,8 +89,8 @@ function renderMarkdown(p: { redis: string; allocator: string; generatedAt: stri
     );
     L.push(sweep ? `|---|--:|--:|--:|---|---|` : `|---|--:|--:|--:|--:|---|---|`);
     for (const v of c.variants) {
-      const enc = Object.entries(v.encodings).map(([, e]) => e).join(', ') || '—';
-      const f = v.bytesPerRecord > 0 ? `${(base.bytesPerRecord / v.bytesPerRecord).toFixed(2)}×` : '—';
+      const enc = Object.entries(v.encodings).map(([, e]) => e).join(', ') || '-';
+      const f = v.bytesPerRecord > 0 ? `${(base.bytesPerRecord / v.bytesPerRecord).toFixed(2)}×` : '-';
       const note = v.caveat ? `${v.note} **⚠ ${v.caveat}**` : v.note;
       L.push(
         sweep
@@ -102,7 +102,7 @@ function renderMarkdown(p: { redis: string; allocator: string; generatedAt: stri
     for (const v of c.variants) {
       const ex = Object.entries(v.extra);
       if (ex.length) {
-        L.push(`**${v.name}** — ${ex.map(([k, val]) => `${k}: \`${val}\``).join(' · ')}`);
+        L.push(`**${v.name}** - ${ex.map(([k, val]) => `${k}: \`${val}\``).join(' · ')}`);
         L.push('');
       }
     }
@@ -114,13 +114,13 @@ function printSummary(rs: CaseResult[]) {
   console.log('┌─ summary (best like-for-like variant; ⚠-caveat rows excluded) ────────');
   for (const c of rs) {
     if (c.kind === 'sweep') {
-      console.log(`│ ${c.id.padEnd(16)} (sweep — see results/bench.md)`);
+      console.log(`│ ${c.id.padEnd(16)} (sweep - see results/bench.md)`);
       continue;
     }
     const base = c.variants[0];
     const eligible = c.variants.filter((v) => !v.caveat);
     const best = eligible.reduce((a, b) => (b.bytesPerRecord < a.bytesPerRecord ? b : a));
-    const f = best.bytesPerRecord > 0 ? (base.bytesPerRecord / best.bytesPerRecord).toFixed(1) : '—';
+    const f = best.bytesPerRecord > 0 ? (base.bytesPerRecord / best.bytesPerRecord).toFixed(1) : '-';
     console.log(
       `│ ${c.id.padEnd(16)} ${fmtBytes(base.bytesPerRecord).padStart(10)} → ${fmtBytes(
         best.bytesPerRecord,

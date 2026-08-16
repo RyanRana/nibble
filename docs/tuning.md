@@ -11,7 +11,7 @@
 await applyKitConfig(redis, { shardWidth: 124 });   // sets the listpack thresholds
 ```
 
-Then sweep the width for *your* record size — it is one constant and it is worth
+Then sweep the width for *your* record size - it is one constant and it is worth
 about 15%:
 
 ```bash
@@ -32,7 +32,7 @@ jemalloc rounds every allocation up to a size class:
 
 So a 129-byte value costs the same as a 160-byte one. A 257-byte value costs the
 same as 320. **Shaving three bytes off a record is usually worth nothing and
-occasionally worth 20%** — the only savings that count are the ones that cross a
+occasionally worth 20%** - the only savings that count are the ones that cross a
 step.
 
 Measured, 50,000 keys with a fixed 8-character key name:
@@ -66,7 +66,7 @@ The folklore is "values ≤ 44 bytes are stored as `embstr`, longer ones as
 
 **Key length and value length share one 64-byte budget.** A short key name buys
 you a longer embedded value, and vice versa. Which is a second, independent
-reason to keep key names short — one you won't find by reading about `embstr`.
+reason to keep key names short - one you won't find by reading about `embstr`.
 
 ---
 
@@ -86,7 +86,7 @@ B/key for a 6,144-byte payload.
 Fixes, in order of preference:
 
 1. **Quantize.** int8 takes you to 1,540 B, which sits comfortably inside the
-   2048 class. This is the right answer for other reasons too — see
+   2048 class. This is the right answer for other reasons too - see
    [05](embeddings.md).
 2. **Truncate the vector.** If your model supports Matryoshka embeddings,
    1536 → 1024 dims lands at 4,096 + header → 5,120 class.
@@ -121,7 +121,7 @@ Measured, 120,000 entries of ~140 B:
 depending on whether you carry TTLs, because the TTL changes the per-entry size
 and therefore where the listpack lands.
 
-There is no formula worth memorizing here — the entry size depends on your
+There is no formula worth memorizing here - the entry size depends on your
 record. Sweep it:
 
 ```bash
@@ -157,7 +157,7 @@ before you suspect the feature.
 Do **not** use `mem_fragmentation_ratio`. Redis's own docs say it "doesn't only
 include fragmentation, but also other process overheads."
 
-Use `allocator_frag_ratio` — the true external fragmentation metric. The harness
+Use `allocator_frag_ratio` - the true external fragmentation metric. The harness
 in this repo reports it from every sample (`src/lib/measure.ts`).
 
 RSS is also sticky: fill an instance to 5 GB, delete 2 GB, and RSS stays near

@@ -20,7 +20,7 @@ const cache = new AgentCache(redis, {
 });
 
 const res = await cache.fetch(promptKey, async () => callTheModel(prompt), embedding);
-res.value;   // Buffer — from cache, or freshly computed
+res.value;   // Buffer - from cache, or freshly computed
 res.kind;    // 'exact' | 'semantic' | 'miss'
 ```
 
@@ -43,7 +43,7 @@ But the RAM is not really the point:
 | Value of one cache hit (20k-token call at $3/M) | ~$0.06 |
 
 **An entry pays for itself if it is hit once every 50,000 months.** So the
-number to optimize is hit *rate*, not cache size — and the only reason to
+number to optimize is hit *rate*, not cache size - and the only reason to
 optimize the RAM at all is that cheap entries let you cache far more
 aggressively and keep them far longer.
 
@@ -52,7 +52,7 @@ aggressively and keep them far longer.
 ## Stampede protection is the whole feature
 
 A popular prompt expires. 200 workers miss it in the same millisecond. Without
-protection that is 200 model calls — a 200× bill spike and, usually, a
+protection that is 200 model calls - a 200× bill spike and, usually, a
 rate-limit incident on top.
 
 The naive fix (`GET`, then `SETNX` if missing) has a race window in which every
@@ -87,7 +87,7 @@ expiry.
 
 The waiter loop checks *value, then lease*. If the winner publishes between
 those two reads, a waiter sees "no value, no lease" and concludes the winner
-died — so it computes too.
+died - so it computes too.
 
 Under 200-way concurrency that hit exactly one worker in testing, and it is why
 `fetch` re-checks the value once more after finding the lease gone. If you write
@@ -98,7 +98,7 @@ your own lease, this is the bug you will have.
 ## Synchronized expiry
 
 Ten thousand entries written during a deploy share a TTL, so they all expire in
-the same second and you get the stampede again — on everything, at once.
+the same second and you get the stampede again - on everything, at once.
 
 `AgentCache` jitters every TTL by ±15% (`jitter` option), so a batch written
 together decays over a window instead of a cliff. It costs nothing.
@@ -126,7 +126,7 @@ Measured on 400 cached prompts:
 | paraphrased prompts caught | **200 / 200** |
 | unrelated prompts wrongly served | **0 / 100** |
 
-The index uses int8-quantized vectors (`Q8`) — see
+The index uses int8-quantized vectors (`Q8`) - see
 [embeddings.md](embeddings.md) for why that's the right quantization and binary
 is not.
 
@@ -138,7 +138,7 @@ miss. Start at 0.92, measure, and treat any drop below ~0.9 as needing evidence.
 
 ## Distributed at scale
 
-Everything for one logical entry — the value, the lease, the semantic index —
+Everything for one logical entry - the value, the lease, the semantic index -
 shares a `{hash tag}`, so it lands in one cluster slot. Without that, Redis
 Cluster rejects the Lua script outright, because it refuses multi-key operations
 that span slots.
@@ -154,7 +154,7 @@ Practical consequences at scale:
   re-routes every key, which is a cache flush, not a migration. Over-provision.
 - **The semantic index is a single key** (`llm:v`), so it does not shard with
   the entries. Above a few million vectors, partition it by tenant or route
-  yourself — this is the main scaling limit of the semantic tier.
+  yourself - this is the main scaling limit of the semantic tier.
 - **Entries carry a TTL, so they are evictable** under `volatile-ttl` while your
   durable records are not. That is exactly the separation
   [production.md](production.md#eviction) is built around: cache and primary
@@ -167,7 +167,7 @@ Practical consequences at scale:
 - **Anything non-deterministic that the user can tell is stale.** A cached
   "current time" answer is a bug.
 - **Per-user private data on a semantic key.** Similarity does not respect
-  tenancy — include the tenant in the cache key, and use a separate semantic
+  tenancy - include the tenant in the cache key, and use a separate semantic
   index per tenant, or you will serve one customer another's answer.
 - **Cheap calls.** The break-even above assumes an expensive model call. Caching
   a 2 ms local computation just adds a round trip.

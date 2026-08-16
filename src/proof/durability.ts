@@ -1,5 +1,5 @@
 /**
- * PROOF 01 — "Redis loses acknowledged writes when it crashes."
+ * PROOF 01 - "Redis loses acknowledged writes when it crashes."
  *
  * This is the first objection and the fairest one, because with Redis's
  * *default* configuration it is true. Redis Open Source ships with
@@ -7,7 +7,7 @@
  * discards everything written since the last one. Anybody who has been burned
  * by that is right to distrust it.
  *
- * It is also fixable, and this file proves it — while being exact about the
+ * It is also fixable, and this file proves it - while being exact about the
  * one thing an AOF cannot fix.
  *
  * ── The distinction that matters ─────────────────────────────────────────
@@ -18,7 +18,7 @@
  *                  killed, the pod is evicted. The kernel survives. Anything
  *                  Redis has `write(2)`-ed is already in the page cache and the
  *                  OS will still flush it. `appendfsync everysec` loses NOTHING
- *                  here — the everysec window is an *fsync* window, not a
+ *                  here - the everysec window is an *fsync* window, not a
  *                  write() window.
  *
  *   MACHINE LOSS   Power failure, kernel panic, an EC2 instance vanishing. The
@@ -33,14 +33,14 @@
  *                  `aof_delayed_fsync` counter in INFO if you care.
  *
  * `docker kill -s KILL` reproduces PROCESS LOSS exactly and faithfully. It
- * cannot reproduce MACHINE LOSS — nothing running inside a healthy kernel can.
+ * cannot reproduce MACHINE LOSS - nothing running inside a healthy kernel can.
  * So this proof does two things:
  *
  *   1. Empirically tests process loss across four durability configurations,
  *      including the default, and counts survivors of acknowledged writes.
  *
  *   2. *Measures* the machine-loss exposure window instead of asserting it, by
- *      timing `WAITAOF` — which returns only once the write is fsynced to disk.
+ *      timing `WAITAOF` - which returns only once the write is fsynced to disk.
  *      The latency of WAITAOF after a write is, by definition, how long that
  *      write was exposed to machine loss. That turns a hand-wave into a number.
  *
@@ -60,7 +60,7 @@ import {
  * Order matters: `docker volume rm` fails while any container still references
  * the volume, and it fails *quietly* here. Removing the container first is the
  * difference between a clean run and silently reloading the previous
- * scenario's dataset — which is exactly the bug that once made this file report
+ * scenario's dataset - which is exactly the bug that once made this file report
  * that 4,000 writes survived a crash with persistence disabled.
  */
 function resetVolume(): void {
@@ -85,7 +85,7 @@ const CONFIGS: Config[] = [
   {
     label: 'default (appendonly no, no save)',
     args: ['--appendonly', 'no', '--save', ''],
-    expectation: 'total loss — nothing is persisted at all',
+    expectation: 'total loss - nothing is persisted at all',
     expectSurvivalPct: 0,
   },
   {
@@ -186,7 +186,7 @@ report.assert(
   `everysec: a write is exposed to machine loss for p50 ${esw.p50} ms / p99 ${esw.p99} ms / max ${esw.max} ms`,
   esw.max < 2100,
   'WAITAOF blocks until the write is fsynced but does NOT trigger an fsync, so this latency is exactly the wait for ' +
-    'the next scheduled one — i.e. the exposure window, measured rather than assumed. Note the bound is ~2 s, not the ' +
+    'the next scheduled one - i.e. the exposure window, measured rather than assumed. Note the bound is ~2 s, not the ' +
     '1 s the docs state: aof.c postpones the write() by up to 2000 ms when an fsync is already in flight.',
 );
 report.assert(
@@ -221,7 +221,7 @@ async function throughputOnce(args: string[], n: number, waitaof: boolean): Prom
  *
  * The first measurement of the session is systematically slow: a cold container,
  * a cold page cache and a cold docker overlay all land on run #1. Taking the
- * best of several runs removes that bias — otherwise whichever config happens to
+ * best of several runs removes that bias - otherwise whichever config happens to
  * be measured first looks worst, which is how an earlier version of this file
  * "proved" that enabling the AOF made Redis faster.
  */
@@ -255,7 +255,7 @@ const delta = ((tpNone - tpEverysec) / tpNone) * 100;
 // "everysec is 3% faster" would be as wrong as saying it is 3% slower.
 const everysecVerdict =
   Math.abs(delta) < 5
-    ? `no measurable throughput cost (${tpNone.toLocaleString()} vs ${tpEverysec.toLocaleString()} ops/s — within run-to-run noise)`
+    ? `no measurable throughput cost (${tpNone.toLocaleString()} vs ${tpEverysec.toLocaleString()} ops/s - within run-to-run noise)`
     : delta > 0
       ? `costs ${delta.toFixed(1)}% throughput (${tpNone.toLocaleString()} → ${tpEverysec.toLocaleString()} ops/s)`
       : `measured ${(-delta).toFixed(1)}% FASTER than no persistence, which means the difference is below this rig's noise floor`;
@@ -263,25 +263,25 @@ report.assert(
   `everysec vs no persistence: ${everysecVerdict}`,
   tpEverysec > tpNone * 0.5,
   'expected: AOF writes are buffered and flushed once per event-loop iteration, and the fsync runs on a ' +
-    'background thread — so everysec should barely touch the write path. That is what makes it the sane default.',
+    'background thread - so everysec should barely touch the write path. That is what makes it the sane default.',
 );
 report.assert(
-  `appendfsync always costs ${pctSlower(tpAlways)} (${tpAlways.toLocaleString()} ops/s) — far less than folklore suggests, because Redis group-commits`,
+  `appendfsync always costs ${pctSlower(tpAlways)} (${tpAlways.toLocaleString()} ops/s) - far less than folklore suggests, because Redis group-commits`,
   tpAlways > tpNone * 0.25,
   'the AOF is fsynced once per event-loop iteration for a whole batch of clients, not once per command',
 );
 report.info(
-  `always + per-batch WAITAOF: ${tpWaitAof.toLocaleString()} ops/s — the "confirm durability where it matters" pattern`,
+  `always + per-batch WAITAOF: ${tpWaitAof.toLocaleString()} ops/s - the "confirm durability where it matters" pattern`,
 );
 report.info(
-  `everysec + per-batch WAITAOF: ${tpWaitAofEverysec.toLocaleString()} ops/s — ` +
+  `everysec + per-batch WAITAOF: ${tpWaitAofEverysec.toLocaleString()} ops/s - ` +
     'a trap. WAITAOF does not trigger an fsync, so under everysec each call waits for the next scheduled one. ' +
     'If you want per-write durability confirmation, you need appendfsync always.',
 );
 
 // ─── Recovery: how long is your RTO, really ──────────────────────────────
 
-report.info('measuring restart/reload time — objection #7');
+report.info('measuring restart/reload time - objection #7');
 
 resetVolume();
 startRedis({
@@ -302,7 +302,7 @@ const memBefore = Number(/used_memory:(\d+)/.exec(await rr.info('memory'))![1]);
 try {
   await rr.call('BGREWRITEAOF');
 } catch (e: any) {
-  // an automatic rewrite may already be in flight — that is fine, we just wait
+  // an automatic rewrite may already be in flight - that is fine, we just wait
   if (!/already in progress/i.test(String(e?.message))) throw e;
 }
 for (;;) {
@@ -326,7 +326,7 @@ report.assert(
   `≈ ${Math.round(BIG / (restartMs / 1000)).toLocaleString()} records/s reload; RAM ${(memBefore / 1024 ** 2).toFixed(1)} MiB → ${(memAfter / 1024 ** 2).toFixed(1)} MiB`,
 );
 report.info(
-  'reload is single-threaded and roughly linear in dataset size — budget RTO from this rate, ' +
+  'reload is single-threaded and roughly linear in dataset size - budget RTO from this rate, ' +
     'and use a replica for failover if that RTO is too slow.',
 );
 

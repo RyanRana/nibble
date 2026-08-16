@@ -1,5 +1,5 @@
 /**
- * CASE 08 — The allocator's staircase.
+ * CASE 08 - The allocator's staircase.
  *
  * Redis does not charge you for the bytes you stored; it charges you for the
  * jemalloc size class your allocation landed in. Size classes go
@@ -19,7 +19,7 @@
  *
  * Key length and value length share ONE 64-byte budget. A short key buys you a
  * longer embedded value and vice versa, so where your cliff falls depends on
- * your key naming — which is a second, independent reason to keep key names
+ * your key naming - which is a second, independent reason to keep key names
  * short. These rows use a fixed 8-character key so the value axis is clean.
  */
 import type Redis from 'ioredis';
@@ -39,7 +39,7 @@ function variantFor(size: number): Variant {
     note:
       size === 45 ? 'past the shared key+value embedding budget'
       : size === 129 || size === 257 || size === 6145 ? 'one byte past a size-class boundary'
-      : size === 6144 ? 'a 1536-d float32 vector — see case 04'
+      : size === 6144 ? 'a 1536-d float32 vector - see case 04'
       : '',
     load: async (r: Redis) => {
       const val = Buffer.alloc(size, 0x61);

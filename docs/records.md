@@ -1,6 +1,6 @@
 # Agent runs, sessions, checkpoints
 
-> One key per record is the expensive way to store records. This is the biggest single win in nibble — 15.4×.
+> One key per record is the expensive way to store records. This is the biggest single win in nibble - 15.4×.
 
 ---
 
@@ -21,7 +21,7 @@ const runs = new Pouch(redis, {
 
 await runs.set(id, run);
 await runs.get(id);
-await runs.mget(ids);   // grouped by shard — one HMGET per shard, not per id
+await runs.mget(ids);   // grouped by shard - one HMGET per shard, not per id
 ```
 
 **~70 B/record**, down from 401 B as a JSON key per run. The rest of this page is
@@ -57,8 +57,8 @@ Measured on 5,000 twenty-field agent runs:
 | one `STRING` per run, packed binary | 217 | 5,000 |
 | **sharded hash, 128/shard, packed** | **147** | **40** |
 
-The last row is 15.3× the first, and the difference between the last two rows —
-217 vs 147 — is *entirely* per-key overhead. Same bytes of record.
+The last row is 15.3× the first, and the difference between the last two rows -
+217 vs 147 - is *entirely* per-key overhead. Same bytes of record.
 
 ---
 
@@ -70,7 +70,7 @@ Put N records inside one hash. Field = record id, value = packed record.
 const runs = new Pouch(redis, {
   prefix: 'run',
   capacity: 2_000_000,   // shard count derives from this
-  width: 124,            // records per shard — see tuning.md
+  width: 124,            // records per shard - see tuning.md
   encode: Run.encode,
   decode: Run.decode,
 });
@@ -102,7 +102,7 @@ node.
 
 Why you care: Redis Cluster rejects multi-key operations across slots. Without
 hash tags you cannot write a Lua script that updates a record *and* its
-secondary indexes atomically — and unmaintained indexes are how a cheap layout
+secondary indexes atomically - and unmaintained indexes are how a cheap layout
 becomes a wrong layout.
 
 So the sharded layout isn't just cheaper, it's what makes server-side atomicity
@@ -117,7 +117,7 @@ produced **69 invariant violations**, the Lua version produced **zero**.
 
 Be honest about this before you adopt it.
 
-**Per-key TTL.** Gone — a shard is one key. Use `ShardedCache` and `HEXPIRE` for
+**Per-key TTL.** Gone - a shard is one key. Use `ShardedCache` and `HEXPIRE` for
 per-field expiry instead. (Redis ≥ 7.4.)
 
 **Per-key eviction.** A shard evicts as a unit, taking ~124 records with it.
@@ -126,7 +126,7 @@ configuration you want anyway.
 
 **`FT.SEARCH`.** The Query Engine indexes keys *by prefix* and cannot see inside
 a hash. Sharding and the query engine are straightforwardly incompatible. The
-fix is a hybrid layout — fat record sharded, thin index document per record —
+fix is a hybrid layout - fat record sharded, thin index document per record -
 measured at 2.04× cheaper than indexing everything.
 
 → [04 · primary database](production.md#querying)
@@ -151,7 +151,7 @@ it is not. Do not set `width` to 10,000 and then act surprised.
 ## The trap: templates and shards don't mix
 
 Redis 8.10 added `template-listpack`, which stores field names once across
-hashes that share a schema. It is excellent — **729 → 409 B/run** — for
+hashes that share a schema. It is excellent - **729 → 409 B/run** - for
 one-hash-per-record layouts.
 
 It is actively harmful here. A shard's field names are *unique record ids*, so
@@ -176,7 +176,7 @@ Turn templates on only for hashes you have deliberately chosen *not* to shard.
 shards = ceil(capacity / width)
 ```
 
-Pick `capacity` generously — over-provisioning shards costs one key each
+Pick `capacity` generously - over-provisioning shards costs one key each
 (~90 B), under-provisioning makes every shard a longer linear scan.
 
 At 2M records and width 124: 16,130 shards, ~1.4 MB of key overhead total. That

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * nibble doctor — what is this Redis wasting, and fix it.
+ * nibble doctor - what is this Redis wasting, and fix it.
  *
  *   node doctor.mjs [redis://...] [--json] [--fix [--apply [--persist]]]
  *
@@ -117,7 +117,7 @@ class Client {
     });
   }
 
-  /** Fire a batch and collect replies in order — one round trip. */
+  /** Fire a batch and collect replies in order - one round trip. */
   pipeline(cmds) {
     return new Promise((res) => {
       const out = [];
@@ -356,7 +356,7 @@ async function runChecks(c, ctx) {
       detail: 'A crash or restart loses 100% of this dataset. Measured: SIGKILL with these settings ' +
               'destroyed 20,000 of 20,000 acknowledged writes.',
       fix: 'If this instance is a cache and everything in it is reconstructible, ignore this. ' +
-           'Otherwise set `appendonly yes` — with `appendfsync everysec` it survived 20,000/20,000.',
+           'Otherwise set `appendonly yes` - with `appendfsync everysec` it survived 20,000/20,000.',
       doc: 'docs/production.md#durability',
     });
   } else if (!aof) {
@@ -372,7 +372,7 @@ async function runChecks(c, ctx) {
   if (aof && config['no-appendfsync-on-rewrite'] === 'yes') {
     add({
       severity: WARN,
-      title: 'no-appendfsync-on-rewrite is yes — this silently weakens your AOF',
+      title: 'no-appendfsync-on-rewrite is yes - this silently weakens your AOF',
       detail: 'During every AOF rewrite this degrades durability to `appendfsync no` (~30 s of exposure). ' +
               'It returns before the `always` branch, so it defeats `appendfsync always` entirely.',
       fix: 'Set it to `no` unless you have measured the latency spike it was added to avoid.',
@@ -384,7 +384,7 @@ async function runChecks(c, ctx) {
       severity: WARN,
       title: 'maxmemory-clients is 0 (unlimited client buffers)',
       detail: 'One slow consumer issuing a large read can grow its output buffer until the instance ' +
-              'evicts or OOMs — without your dataset growing at all.',
+              'evicts or OOMs - without your dataset growing at all.',
       fix: 'Set `maxmemory-clients 5%`.',
     });
   }
@@ -410,7 +410,7 @@ async function runChecks(c, ctx) {
     add({
       severity: OPP,
       saving,
-      title: `${ns.pattern} — ~${ns.estimatedKeys.toLocaleString()} keys paying ~${Math.round(overheadPerKey)} B each in key overhead`,
+      title: `${ns.pattern} - ~${ns.estimatedKeys.toLocaleString()} keys paying ~${Math.round(overheadPerKey)} B each in key overhead`,
       detail:
         `Every Redis key costs dictEntry + robj + the key's own string before your data. ` +
         `This namespace averages ${fmtBytes(ns.avgMemory)}/key of which ~${Math.round(overheadPerKey)} B is bookkeeping.`,
@@ -429,7 +429,7 @@ async function runChecks(c, ctx) {
     add({
       severity: OPP,
       saving,
-      title: `${ns.pattern} — ~${Math.round(waste)} B/key lost to allocator rounding`,
+      title: `${ns.pattern} - ~${Math.round(waste)} B/key lost to allocator rounding`,
       detail:
         `Values average ${Math.round(ns.avgValueBytes)} B, which rounds up to the ` +
         `${sizeClass(ns.avgValueBytes + sdsHeader(ns.avgValueBytes) + 1)} B size class. ` +
@@ -477,7 +477,7 @@ async function runChecks(c, ctx) {
       add({
         severity: OPP,
         saving,
-        title: `${ns.pattern} — embeddings stored as JSON arrays (${arrayLen} dims)`,
+        title: `${ns.pattern} - embeddings stored as JSON arrays (${arrayLen} dims)`,
         detail:
           `Each vector is ~${fmtBytes(jsonBytes)} of decimal text. As raw float32 it is ` +
           `${fmtBytes(arrayLen * 4)}; quantized to int8 it is ${fmtBytes(int8Bytes)}.`,
@@ -494,7 +494,7 @@ async function runChecks(c, ctx) {
       add({
         severity: OPP,
         saving,
-        title: `${ns.pattern} — ${((avgNames / avgTotal) * 100).toFixed(0)}% of these JSON bytes are field names`,
+        title: `${ns.pattern} - ${((avgNames / avgTotal) * 100).toFixed(0)}% of these JSON bytes are field names`,
         detail:
           `Average value ${fmtBytes(avgTotal)}, of which ~${fmtBytes(avgNames)} is repeated key names. ` +
           'Every record re-ships the schema to a reader that already knows it.',
@@ -518,13 +518,13 @@ async function runChecks(c, ctx) {
     add({
       severity: OPP,
       saving,
-      title: `${ns.pattern} — looks like raw float32 embeddings (${dim} dims, ${len} B each)`,
+      title: `${ns.pattern} - looks like raw float32 embeddings (${dim} dims, ${len} B each)`,
       detail:
         `Fixed-width ${len} B values at a common embedding dimension. Note ${len} B + header rounds to ` +
         `the ${sizeClass(len + 4)} B size class, so you are also losing ` +
         `${fmtBytes(sizeClass(len + 4) - len - 4)}/vector to rounding.`,
       fix: `int8 quantization takes each vector to ${dim + 4} B. Measure recall@10 on your corpus before ` +
-           'and after — it should barely move for int8.',
+           'and after - it should barely move for int8.',
       doc: 'docs/embeddings.md',
     });
   }
@@ -539,7 +539,7 @@ async function runChecks(c, ctx) {
       add({
         severity: OPP,
         saving: 0,
-        title: `${ns.pattern} — hashes are "hashtable"-encoded at only ~${Math.round(avgSize)} fields`,
+        title: `${ns.pattern} - hashes are "hashtable"-encoded at only ~${Math.round(avgSize)} fields`,
         detail: 'A listpack-encoded hash of this size uses substantially less memory. Measured on ' +
                 '20-field records: hashtable 1,142 B vs listpack 729 B.',
         fix: `Raise hash-max-listpack-entries above ${Math.ceil(avgSize)} (and hash-max-listpack-value ` +
@@ -554,7 +554,7 @@ async function runChecks(c, ctx) {
         add({
           severity: OPP,
           saving: 0,
-          title: `${ns.pattern} — integer-only sets not using the intset encoding`,
+          title: `${ns.pattern} - integer-only sets not using the intset encoding`,
           detail: 'Sets whose members are all integers can be stored as a packed sorted int64 array. ' +
                   'Measured: 54.1 B/member as strings vs 9.0 B/member as sharded intsets.',
           fix: 'Keep each set under set-max-intset-entries (default 512) by sharding, so the packed ' +
@@ -580,10 +580,10 @@ async function runChecks(c, ctx) {
     add({
       severity: OPP,
       saving,
-      title: `${ns.pattern} — large sorted sets (~${Math.round(avgMembers).toLocaleString()} members) at ~${Math.round(perSample)} B/member`,
+      title: `${ns.pattern} - large sorted sets (~${Math.round(avgMembers).toLocaleString()} members) at ~${Math.round(perSample)} B/member`,
       detail:
         'If the score is a timestamp, this is a hand-rolled time series. Measured on 1M samples: ' +
-        'a ZSET cost 88.6 B/sample, RedisTimeSeries COMPRESSED with integer values cost 2.1 B — ' +
+        'a ZSET cost 88.6 B/sample, RedisTimeSeries COMPRESSED with integer values cost 2.1 B - ' +
         'and TimeSeries is exact and range-queryable.',
       fix: 'TS.CREATE … ENCODING COMPRESSED, and round values to integers before storing ' +
            '(float values measured 4× worse: 8.6 vs 2.1 B/sample).',
@@ -600,7 +600,7 @@ async function runChecks(c, ctx) {
   if (streamKeys.length && !streamKeys.complete) {
     add({
       severity: INFO,
-      title: `stream scan was partial — only the first ${streamKeys.length} streams were checked`,
+      title: `stream scan was partial - only the first ${streamKeys.length} streams were checked`,
       detail: 'The keyspace is large enough that scanning every key by type would have made this ' +
               'slow. Consumer-group backlogs on unscanned streams are not reflected below.',
       fix: 'Re-run against a smaller keyspace, or check the remaining streams with XINFO GROUPS.',
@@ -622,7 +622,7 @@ async function runChecks(c, ctx) {
             title: `${key} group "${str(map.name)}" has ${pending.toLocaleString()} un-acked messages`,
             detail:
               'Every delivered-but-un-acked message sits in the Pending Entries List, holding an id, a ' +
-              'consumer, a timestamp and a delivery counter — measured at ~238 B each. XTRIM does NOT ' +
+              'consumer, a timestamp and a delivery counter - measured at ~238 B each. XTRIM does NOT ' +
               'shrink the PEL, so MAXLEN will not save you here.',
             fix: 'XACK on success, and XAUTOCLAIM + XACK to reap messages abandoned by dead consumers.',
             doc: 'docs/production.md',
@@ -645,7 +645,7 @@ async function runChecks(c, ctx) {
       title: 'Redis 8.10 hash templates are available and disabled',
       detail:
         'Hashes that share a schema can store their field names ONCE in a shared template. Measured ' +
-        '729 → 409 B/run on 20-field records — a config change with no application change.',
+        '729 → 409 B/run on 20-field records - a config change with no application change.',
       fix: 'CONFIG SET hash-min-template-entries 4. IMPORTANT: this HURTS sharded hashes, whose field ' +
            'names are unique ids (measured 20% worse). Enable it only if you keep one hash per record.',
       doc: 'docs/records.md',
@@ -654,7 +654,7 @@ async function runChecks(c, ctx) {
   if (maj < 8 || (maj === 7 && min < 4)) {
     add({
       severity: INFO,
-      title: `Redis ${version} — per-field TTLs (HEXPIRE) need 7.4+`,
+      title: `Redis ${version} - per-field TTLs (HEXPIRE) need 7.4+`,
       detail: 'Without HEXPIRE you cannot shard records that need individual expiry, which removes the ' +
               'largest single optimization from the table.',
       fix: 'Upgrade to 7.4+ to unlock per-field expiry, or 8.10+ for hash templates as well.',
@@ -666,7 +666,7 @@ async function runChecks(c, ctx) {
 
 
 // ────────────────────────────── fixing ─────────────────────────────────
-// Three tiers: `config` (CONFIG SET, reversible), `rewrite` (lossless —
+// Three tiers: `config` (CONFIG SET, reversible), `rewrite` (lossless -
 // DUMP+RESTORE re-encodes under current config, keeping the TTL), and `refused`
 // (lossy or needs your data model; prints instructions instead of guessing).
 
@@ -734,7 +734,7 @@ function planFixes(ctx) {
         what: `hash-max-listpack-entries: ${current} → ${target}`,
         cmds: [['CONFIG', 'SET', 'hash-max-listpack-entries', String(target)]],
         rollback: `CONFIG SET hash-max-listpack-entries ${current}`,
-        note: 'affects NEW hashes only — the rewrite below fixes the existing ones',
+        note: 'affects NEW hashes only - the rewrite below fixes the existing ones',
       });
     }
     for (const n of shrinkable) {
@@ -754,7 +754,7 @@ function planFixes(ctx) {
     if (n.type === 'string' && n.estimatedKeys > 1000) {
       const len = Math.round(n.avgValueBytes);
       if (len % 4 === 0 && DIMS.has(len / 4)) {
-        refused.push(`${n.pattern}: quantize ${len / 4}-d float32 embeddings to int8 (${len} → ${len / 4 + 4} B). Lossy — measure recall@10 first. See docs/embeddings.md`);
+        refused.push(`${n.pattern}: quantize ${len / 4}-d float32 embeddings to int8 (${len} → ${len / 4 + 4} B). Lossy - measure recall@10 first. See docs/embeddings.md`);
       }
     }
   }
@@ -773,7 +773,7 @@ async function applyFixes(c, plan, opts) {
       for (const cmd of step.cmds) {
         const r = await c.cmd(...cmd);
         if (r?.err) {
-          console.log(`  ${C.red}✘${C.r} ${step.what} — ${r.err}`);
+          console.log(`  ${C.red}✘${C.r} ${step.what} - ${r.err}`);
           continue;
         }
       }
@@ -801,8 +801,8 @@ async function applyFixes(c, plan, opts) {
   if (opts.persist) {
     const r = await c.raw('CONFIG', 'REWRITE');
     console.log(r?.err
-      ? `  ${C.yel}!${C.r} CONFIG REWRITE failed (${r.err}) — changes are runtime-only and will not survive a restart`
-      : `  ${C.grn}✔${C.r} CONFIG REWRITE — changes persisted to the config file`);
+      ? `  ${C.yel}!${C.r} CONFIG REWRITE failed (${r.err}) - changes are runtime-only and will not survive a restart`
+      : `  ${C.grn}✔${C.r} CONFIG REWRITE - changes persisted to the config file`);
   }
 
   try { await c.cmd('MEMORY', 'PURGE'); } catch { /* not jemalloc */ }
@@ -938,7 +938,7 @@ let c;
 try {
   c = await Client.connect(url);
 } catch (e) {
-  console.error(`nibble doctor: cannot connect to ${url.replace(/:[^:@/]*@/, ':***@')} — ${e.message}`);
+  console.error(`nibble doctor: cannot connect to ${url.replace(/:[^:@/]*@/, ':***@')} - ${e.message}`);
   process.exit(2);
 }
 

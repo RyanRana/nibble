@@ -1,4 +1,4 @@
-/** MessagePack — benchmark only. Kept out of src/kit so the kit stays dependency-free. */
+/** MessagePack - benchmark only. Kept out of src/kit so the kit stays dependency-free. */
 import { encode as mpEncode, decode as mpDecode } from '@msgpack/msgpack';
 
 export function msgpack(v: unknown): Buffer {

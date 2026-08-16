@@ -3,7 +3,7 @@
 **Find your use case. Copy the snippet. Done.**
 
 Every snippet below runs against a plain Redis with no install and no build
-step — nibble has zero dependencies. Every number is measured on Redis 8.10 and
+step - nibble has zero dependencies. Every number is measured on Redis 8.10 and
 reproducible with `bash scripts/run-all.sh`.
 
 ```bash
@@ -42,8 +42,8 @@ await applyKitConfig(redis, { shardWidth: 124 }); // listpack thresholds
 await applySafeEviction(redis, 8 * 1024 ** 3);    // durable records can't be evicted
 ```
 
-`applySafeEviction` is the important one. Under `allkeys-lru` — the policy every
-cache tutorial recommends — filling an instance destroyed **99.8% of durable
+`applySafeEviction` is the important one. Under `allkeys-lru` - the policy every
+cache tutorial recommends - filling an instance destroyed **99.8% of durable
 records while reporting success on every single write**. Under `volatile-ttl` it
 destroyed none, because a key with no TTL is never an eviction candidate.
 
@@ -84,11 +84,11 @@ One constant, ~15%. → [tuning.md](tuning.md)
 
 | | |
 |---|---|
-| [caching.md](caching.md) | LLM response caching — stampedes, semantic hits, cluster |
-| [records.md](records.md) | sharding — the biggest single win (15.4×) |
+| [caching.md](caching.md) | LLM response caching - stampedes, semantic hits, cluster |
+| [records.md](records.md) | sharding - the biggest single win (15.4×) |
 | [packing.md](packing.md) | the schema DSL, compression, and migrating a schema safely |
 | [embeddings.md](embeddings.md) | quantization, and how to not fool yourself about recall |
-| [metrics.md](metrics.md) | percentiles and time series — including when a sketch *loses* |
+| [metrics.md](metrics.md) | percentiles and time series - including when a sketch *loses* |
 | [tuning.md](tuning.md) | allocator size classes, shard width, which bytes actually matter |
 | [production.md](production.md) | durability, eviction, atomicity, querying |
 | [measuring.md](measuring.md) | the harness, and why `used_memory_dataset` is a trap |

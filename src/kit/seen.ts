@@ -2,12 +2,12 @@
  * "Have I already done this?" at 9 B/id exact, or 1.4 B probabilistic.
  *
  * ExactSeen hashes to 52 bits and shards so each SET stays an intset.
- * BloomSeen is a front door for an authoritative check, never the check —
+ * BloomSeen is a front door for an authoritative check, never the check -
  * its "no" is always true, its "yes" usually is.
  */
 import { type Client, type Reply, num, isErr } from './client.ts';
 
-/** 52-bit: widest that stays an exact JS integer. Collisions ~n²/2^53 — ~1 in 36 at 500k ids. */
+/** 52-bit: widest that stays an exact JS integer. Collisions ~n²/2^53 - ~1 in 36 at 500k ids. */
 export function hash52(s: string): number {
   let h1 = 0x811c9dc5, h2 = 0x01000193;
   for (let i = 0; i < s.length; i++) {
@@ -39,7 +39,7 @@ export class ExactSeen {
     return `${this.prefix}:{${h % this.shards}}`;
   }
 
-  /** True if this id had NOT been seen before — i.e. you should do the work. */
+  /** True if this id had NOT been seen before - i.e. you should do the work. */
   async add(id: string): Promise<boolean> {
     const h = hash52(id);
     return num(await this.r.cmd('SADD', this.keyFor(h), String(h))) === 1;
@@ -106,7 +106,7 @@ export class BloomSeen {
     if (isErr(res) && !/exists/i.test(res.err)) throw new Error(res.err);
   }
 
-  /** True if newly added. A `false` here may be a false positive — see above. */
+  /** True if newly added. A `false` here may be a false positive - see above. */
   async add(id: string): Promise<boolean> {
     return num(await this.r.cmd('BF.ADD', this.key, id)) === 1;
   }

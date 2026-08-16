@@ -1,5 +1,5 @@
 /**
- * CASE 05 — Idempotency / dedup / "have I already done this?"
+ * CASE 05 - Idempotency / dedup / "have I already done this?"
  *
  * Every serious agent platform keeps a large set of seen-ids: idempotency keys,
  * processed webhook ids, visited URLs, tool-call fingerprints. The set is huge,
@@ -9,11 +9,11 @@
  *
  * Two families of answer:
  *
- *   exact & sharded  — hash the id to a 52-bit int, shard so each SET stays
+ *   exact & sharded  - hash the id to a 52-bit int, shard so each SET stays
  *                      under set-max-intset-entries and keeps the intset
  *                      encoding: ~8 bytes/member, no false positives, and
  *                      deletion still works.
- *   probabilistic    — a Bloom or Cuckoo filter: ~1–2 bytes/member, false
+ *   probabilistic    - a Bloom or Cuckoo filter: ~1–2 bytes/member, false
  *                      positives at a rate you choose, no deletion (Bloom).
  *
  * Both are measured, and the Bloom filter's *empirical* false-positive rate is
@@ -35,7 +35,7 @@ const { IDS, ABSENT } = (() => {
   return { IDS: ids, ABSENT: absent };
 })();
 
-/** 52-bit FNV-1a — stays inside JS's exact-integer range and Redis's int64 intset. */
+/** 52-bit FNV-1a - stays inside JS's exact-integer range and Redis's int64 intset. */
 function hash52(s: string): number {
   let h1 = 0x811c9dc5, h2 = 0x01000193;
   for (let i = 0; i < s.length; i++) {
@@ -67,7 +67,7 @@ export const case05: BenchCase = {
     },
     {
       name: 'B · one STRING key per id (TTL pattern)',
-      note: 'SET id 1 EX 86400 NX — the textbook idempotency lock. Pays full key overhead per id.',
+      note: 'SET id 1 EX 86400 NX - the textbook idempotency lock. Pays full key overhead per id.',
       load: async (r: Redis) => {
         await pipe(r, IDS.map((id) => ['SET', `idem:${id}`, '1', 'EX', '86400', 'NX']) as any, 2000);
         return N;
@@ -105,7 +105,7 @@ export const case05: BenchCase = {
       },
       encodingProbes: ['seen:{0}'],
       probe: async (r) => ({
-        'exact?': 'yes — deletable, no false positives',
+        'exact?': 'yes - deletable, no false positives',
         'hash collisions expected': (((N * (N - 1)) / 2 / 2 ** 52).toFixed(4)),
         'members in shard 0': await r.scard('seen:{0}'),
       }),
@@ -113,7 +113,7 @@ export const case05: BenchCase = {
     {
       name: 'E · Bloom filter, 1% FP',
       note: 'BF.RESERVE 0.01. Membership only: no iteration, no deletion, no listing.',
-      caveat: 'probabilistic — 1% false positives',
+      caveat: 'probabilistic - 1% false positives',
       load: async (r: Redis) => {
         await r.call('BF.RESERVE', 'seen', '0.01', String(N), 'NONSCALING');
         for (let i = 0; i < N; i += 1000) {
@@ -126,7 +126,7 @@ export const case05: BenchCase = {
     {
       name: 'F · Bloom filter, 0.1% FP',
       note: 'Ten times stricter, ~1.5× the bytes. The knob is yours.',
-      caveat: 'probabilistic — 0.1% false positives',
+      caveat: 'probabilistic - 0.1% false positives',
       load: async (r: Redis) => {
         await r.call('BF.RESERVE', 'seen', '0.001', String(N), 'NONSCALING');
         for (let i = 0; i < N; i += 1000) {
@@ -138,7 +138,7 @@ export const case05: BenchCase = {
     },
     {
       name: 'G · Cuckoo filter, 0.1%-class',
-      note: 'CF.RESERVE — costs a bit more than Bloom but supports deletion, which idempotency keys often need.',
+      note: 'CF.RESERVE - costs a bit more than Bloom but supports deletion, which idempotency keys often need.',
       caveat: 'probabilistic, but deletable',
       load: async (r: Redis) => {
         await r.call('CF.RESERVE', 'seen', String(N), 'BUCKETSIZE', '2', 'EXPANSION', '1');
@@ -161,7 +161,7 @@ export const case05: BenchCase = {
     },
     {
       name: 'H · HyperLogLog (cardinality only)',
-      note: 'Different question, different price. PFADD answers "how many distinct?" in a fixed 12 KiB — for any N.',
+      note: 'Different question, different price. PFADD answers "how many distinct?" in a fixed 12 KiB - for any N.',
       caveat: 'answers cardinality, NOT membership',
       load: async (r: Redis) => {
         for (let i = 0; i < N; i += 1000) await r.pfadd('seen', ...IDS.slice(i, i + 1000));
@@ -172,7 +172,7 @@ export const case05: BenchCase = {
         return {
           'estimated distinct': est,
           'error': `${(((est - N) / N) * 100).toFixed(2)}%`,
-          'answers membership?': 'no — cardinality only',
+          'answers membership?': 'no - cardinality only',
         };
       },
     },

@@ -85,7 +85,7 @@ export class ShardedCache {
     return num(await this.r.cmd('HDEL', this.keyFor(k), this.fieldFor(k))) === 1;
   }
 
-  /** Make an entry permanent — it stops being an eviction candidate too. */
+  /** Make an entry permanent - it stops being an eviction candidate too. */
   async persist(k: string): Promise<void> {
     await this.r.cmd('HPERSIST', this.keyFor(k), 'FIELDS', '1', this.fieldFor(k));
   }

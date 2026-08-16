@@ -19,7 +19,7 @@ const after = await sample(redis);
 console.log(`${(after.attributable - before.attributable) / records} B/record`);
 ```
 
-Run it twice and keep the **cheaper** number — allocator noise is one-sided.
+Run it twice and keep the **cheaper** number - allocator noise is one-sided.
 The rest of this page is the six ways this measurement goes wrong.
 
 ---
@@ -27,7 +27,7 @@ The rest of this page is the six ways this measurement goes wrong.
 ## The method
 
 ```
-1. FLUSHALL SYNC   empty the keyspace — synchronously, or async free
+1. FLUSHALL SYNC   empty the keyspace - synchronously, or async free
                    drops memory AFTER you sampled
 2. CONFIG SET      apply the encoding thresholds this variant needs
 3. MEMORY PURGE    make jemalloc return dirty pages, so the baseline isn't
@@ -40,7 +40,7 @@ The rest of this page is the six ways this measurement goes wrong.
 
 Every variant runs **twice** and the *cheaper* result is kept. Allocator noise
 is one-sided: a sample can be inflated by fragmentation, a background rehash, or
-pages jemalloc hasn't returned — but it can never be deflated below the true
+pages jemalloc hasn't returned - but it can never be deflated below the true
 allocation. So the minimum is the best estimator, and it's far more stable
 run-to-run than the mean.
 
@@ -59,7 +59,7 @@ console.log(`${(after.attributable - before.attributable) / records} B/record`);
 ## Trap #1: `used_memory_dataset` hides the win
 
 Redis reports several memory figures. The tempting one is `used_memory_dataset`
-— "the size of your data" — and it is **wrong for this purpose**.
+- "the size of your data" - and it is **wrong for this purpose**.
 
 Redis classifies the top-level key dictionary (`dictEntry` + `robj` + the key's
 SDS) as *overhead*, not dataset. Per-key overhead is precisely what
@@ -131,7 +131,7 @@ when you delete fields.
 
 Every variant resets to a known baseline before applying its own settings.
 `DEFAULT_ENCODING_CONFIG` in `src/lib/redis.ts` explicitly restores all of them
-— including `hash-min-template-entries: 0`, which we added after a templating
+- including `hash-min-template-entries: 0`, which we added after a templating
 setting from one case silently improved the next.
 
 ---
@@ -144,14 +144,14 @@ Two failures we found in our own generators:
 
 **Text.** The first version drew from a 60-word lexicon. A 32 KiB trained
 dictionary memorizes that entire vocabulary, so dictionary compression scored
-4.9:1 — a number nobody could reproduce. Now: 20,000 real words sampled
+4.9:1 - a number nobody could reproduce. Now: 20,000 real words sampled
 Zipf(α≈1.07). That's *harder* to compress than real prose (no syntax, no phrase
 repetition), so our compression figures are conservative.
 
 **Vectors.** The first version used tight clusters plus iid noise, which makes
 the top-10 neighbours differ *only* by high-frequency noise. Every lossy method
 scored ~0%. The replacement is a low-rank topic model whose similarity
-distribution matches real embedding corpora — and it revealed that our
+distribution matches real embedding corpora - and it revealed that our
 binary-quantization result was a corpus artifact. → [05](embeddings.md)
 
 **Always report a property of your corpus alongside your result.** For text, the
@@ -197,12 +197,12 @@ node src/bench/run-all.ts 12
 
 Two fields carry the honesty:
 
-**`caveat`** — set it when a variant does *not* answer the same question as the
+**`caveat`** - set it when a variant does *not* answer the same question as the
 baseline. Lossy retention, cardinality-only, probabilistic membership. Caveated
 rows are excluded from "best result" rankings, because otherwise HyperLogLog
 wins every comparison by answering a different question very cheaply.
 
-**`kind: 'sweep'`** — set it when variants are points on an axis (value size,
+**`kind: 'sweep'`** - set it when variants are points on an axis (value size,
 shard width) rather than competing designs, so no ratios are computed between
 them.
 
@@ -216,7 +216,7 @@ them.
   fork spike.
 - **Fork / copy-on-write.** Redis "can use up to 2× the memory" during BGSAVE
   because COW copies whole 4 KiB pages. Our instance has persistence off during
-  benchmarks *specifically* so it doesn't contaminate samples — which means our
+  benchmarks *specifically* so it doesn't contaminate samples - which means our
   numbers are steady-state, and you should provision above them.
 - **Machine-loss durability.** `docker kill` is process loss. See
   [04](production.md#durability).

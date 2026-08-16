@@ -1,5 +1,5 @@
 /**
- * PROOF 05 — the agent cache under 200-way concurrency.
+ * PROOF 05 - the agent cache under 200-way concurrency.
  *
  * Stampede (one model call, not 200), dead-holder recovery, semantic hit rate
  * and false positives, and bytes per entry.
@@ -39,7 +39,7 @@ async function expensiveModelCall(): Promise<string> {
 }
 
 {
-  // Each worker gets its OWN connection — same as separate processes would.
+  // Each worker gets its OWN connection - same as separate processes would.
   const clients = await Promise.all(
     Array.from({ length: WORKERS }, () => connect('redis://127.0.0.1:6399')),
   );
@@ -69,7 +69,7 @@ async function expensiveModelCall(): Promise<string> {
     `${WORKERS} concurrent workers missed the same key → the model was called ${modelCalls} time(s), not ${WORKERS}`,
     modelCalls === 1 && computed === 1,
     `${computed} computed, ${waited} waited on the lease, ${timeouts} lease timeouts. ` +
-      `Without a lease this is ${WORKERS} model calls — a ${WORKERS}× bill and a rate-limit incident.`,
+      `Without a lease this is ${WORKERS} model calls - a ${WORKERS}× bill and a rate-limit incident.`,
   );
   report.assert(
     `all ${WORKERS} workers got a value back`,
@@ -90,7 +90,7 @@ async function expensiveModelCall(): Promise<string> {
   });
   await cacheA.init();
 
-  // A takes the lease and then "dies" — never publishes, never releases.
+  // A takes the lease and then "dies" - never publishes, never releases.
   await r.cmd('EVALSHA',
     str(await r.cmd('SCRIPT', 'LOAD', `
       local v = redis.call('HGET', KEYS[1], ARGV[1])
@@ -108,7 +108,7 @@ async function expensiveModelCall(): Promise<string> {
   const ms = performance.now() - t0;
 
   report.assert(
-    `a worker that dies holding the lease does not wedge the key — recovered in ${Math.round(ms)} ms`,
+    `a worker that dies holding the lease does not wedge the key - recovered in ${Math.round(ms)} ms`,
     recovered && res.value !== null,
     'the lease has a TTL, so the next caller takes over rather than waiting forever',
   );
@@ -153,12 +153,12 @@ async function expensiveModelCall(): Promise<string> {
   report.assert(
     `semantic tier caught ${hits}/200 paraphrased prompts that an exact-key cache would have missed entirely`,
     hits > 150,
-    'exact-key hit rate on paraphrased traffic is 0 by construction — this is the tier that pays for itself',
+    'exact-key hit rate on paraphrased traffic is 0 by construction - this is the tier that pays for itself',
   );
   report.assert(
     `${falsePositives}/100 unrelated prompts were wrongly served from cache`,
     falsePositives === 0,
-    'threshold 0.92 — tune it against your own traffic; too low serves the wrong answer confidently',
+    'threshold 0.92 - tune it against your own traffic; too low serves the wrong answer confidently',
   );
 }
 
@@ -198,7 +198,7 @@ async function expensiveModelCall(): Promise<string> {
   const ramCostPerEntryMonth = (perEntry / 1024 ** 3) * 12.93;
   report.info(
     `economics: one cached entry costs $${ramCostPerEntryMonth.toExponential(1)}/month of RAM and ` +
-      `saves ~$${perHitSaved.toFixed(2)} per hit — the break-even is ${Math.ceil(ramCostPerEntryMonth / perHitSaved * 1e6) / 1e6} hits/month`,
+      `saves ~$${perHitSaved.toFixed(2)} per hit - the break-even is ${Math.ceil(ramCostPerEntryMonth / perHitSaved * 1e6) / 1e6} hits/month`,
   );
   report.info(
     'which is why cache hit rate, not cache RAM, is the number to optimize. nibble makes the RAM small ' +

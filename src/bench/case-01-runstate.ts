@@ -1,5 +1,5 @@
 /**
- * CASE 01 — Agent run state: how you lay out one record.
+ * CASE 01 - Agent run state: how you lay out one record.
  *
  * Every agentic framework stores a "run" / "session" / "checkpoint" row with a
  * few dozen fields. The naive layouts are the ones that come naturally from an
@@ -29,13 +29,13 @@ function runs(): AgentRun[] {
 }
 
 const DATA = runs();
-/** Dictionaries are trained per encoding — a dictionary is a corpus, not a setting. */
+/** Dictionaries are trained per encoding - a dictionary is a corpus, not a setting. */
 const DICT_JSON = makeDictionary(DATA.slice(0, 120).map((x) => json(x)));
 const DICT_PACKED = makeDictionary(DATA.slice(0, 120).map((x) => packRun(x)));
 
 /** Shard router: which hash holds this run, given `shards` buckets. */
 function shardOf(runId: string, shards: number): number {
-  // FNV-1a over the id's first 8 hex chars — cheap and stable
+  // FNV-1a over the id's first 8 hex chars - cheap and stable
   let h = 0x811c9dc5;
   for (let i = 0; i < 8; i++) {
     h ^= runId.charCodeAt(i);
@@ -68,7 +68,7 @@ export const case01: BenchCase = {
     },
     {
       name: 'B · HASH, long names, hashtable',
-      note: 'One hash per run but forced past the listpack threshold — what you get at scale if you never tune.',
+      note: 'One hash per run but forced past the listpack threshold - what you get at scale if you never tune.',
       config: { 'hash-max-listpack-entries': 0 },
       load: async (r: Redis) => {
         const cmds: string[][] = [];
@@ -84,7 +84,7 @@ export const case01: BenchCase = {
     },
     {
       name: 'C · HASH, long names, listpack',
-      note: 'Same data, same API — only the encoding threshold changed. No code change.',
+      note: 'Same data, same API - only the encoding threshold changed. No code change.',
       load: async (r: Redis) => {
         const cmds: string[][] = [];
         for (const run of DATA) {
@@ -114,7 +114,7 @@ export const case01: BenchCase = {
       encodingProbes: [`run:${DATA[0].run_id}`],
       probe: async () => ({
         'requires': 'Redis ≥ 8.10',
-        'app changes': 'none — CONFIG SET hash-min-template-entries',
+        'app changes': 'none - CONFIG SET hash-min-template-entries',
       }),
     },
     {
@@ -252,7 +252,7 @@ export const case01: BenchCase = {
     },
     {
       name: 'L · sharded HASH + JSON dict-deflate',
-      note: 'Sharding plus compression while keeping plain JSON as the wire format — no schema code anywhere.',
+      note: 'Sharding plus compression while keeping plain JSON as the wire format - no schema code anywhere.',
       config: { 'hash-max-listpack-entries': 256, 'hash-max-listpack-value': 512 },
       load: async (r: Redis) => {
         const shards = Math.ceil(N / 128);

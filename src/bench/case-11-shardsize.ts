@@ -1,5 +1,5 @@
 /**
- * CASE 11 — Shard sizing, or: the 11% nobody tunes.
+ * CASE 11 - Shard sizing, or: the 11% nobody tunes.
  *
  * Case 08 showed the allocator charges you by size class, not by byte. Case 01
  * showed sharding records into shared hashes is the biggest single RAM win.
@@ -14,7 +14,7 @@
  *
  * Same data. Same encoding. Same commands. Only the shard width changes.
  *
- * The effect is not small and it is not noise — it is periodic, because size
+ * The effect is not small and it is not noise - it is periodic, because size
  * classes are periodic. It also explains a result that confused this benchmark
  * earlier: per-field TTLs (HEXPIRE) looked like they cost ~32 bytes per field,
  * when the intrinsic cost in `listpackex` is ~10 bytes. The other ~22 was the
@@ -70,7 +70,7 @@ function variantFor(width: number, ttl: boolean): Variant {
 export const case11: BenchCase = {
   id: '11-shard-size',
   title: `Shard width vs allocator size class (${N.toLocaleString()} entries)`,
-  question: 'Same layout, same data — how much does the shard width alone cost you?',
+  question: 'Same layout, same data - how much does the shard width alone cost you?',
   unit: 'entry',
   kind: 'sweep',
   variants: [

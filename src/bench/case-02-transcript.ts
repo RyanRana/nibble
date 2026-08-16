@@ -1,5 +1,5 @@
 /**
- * CASE 02 — Conversation transcripts.
+ * CASE 02 - Conversation transcripts.
  *
  * The bulk of an agentic system's bytes is prose: user turns, assistant turns,
  * tool results. Prose is the one thing in this repo that compresses well, and
@@ -77,7 +77,7 @@ export const case02: BenchCase = {
     },
     {
       name: 'C · LIST of MessagePack turns',
-      note: 'Binary framing only. Prose dominates, so the win is small — worth knowing before you refactor.',
+      note: 'Binary framing only. Prose dominates, so the win is small - worth knowing before you refactor.',
       load: async (r: Redis) => {
         for (let t = 0; t < RUNS; t++) {
           await pipe(r, THREADS[t].map((x) => ['RPUSH', `thread:${t}`, msgpack(x)]) as any, 200);

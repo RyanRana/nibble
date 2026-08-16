@@ -1,5 +1,5 @@
 /**
- * CASE 06 — Expiring entries without one key per entry.
+ * CASE 06 - Expiring entries without one key per entry.
  *
  * Sharding records into shared hashes (case 01) has one classic objection:
  * "we need TTLs, and TTLs are per key." That objection expired with Redis 7.4,
@@ -8,7 +8,7 @@
  * So you can have both: no per-key overhead *and* per-entry expiry. This case
  * measures the price of each option and then proves the expiry actually fires.
  *
- * Workload: an agent tool-result cache — the thing that saves you the most
+ * Workload: an agent tool-result cache - the thing that saves you the most
  * money per byte in an agentic system, and the thing most likely to be
  * implemented as millions of individually-expiring string keys.
  */
@@ -114,7 +114,7 @@ export const case06: BenchCase = {
     },
     {
       name: 'F · sharded HASH + HEXPIRE + zstd values',
-      note: 'All three levers. Payloads here are ~90 B, so compression is near its break-even — shown deliberately.',
+      note: 'All three levers. Payloads here are ~90 B, so compression is near its break-even - shown deliberately.',
       config: { 'hash-max-listpack-entries': 256, 'hash-max-listpack-value': 256 },
       load: async (r: Redis) => {
         const cmds: any[] = [];

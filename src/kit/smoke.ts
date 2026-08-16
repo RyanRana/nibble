@@ -36,7 +36,7 @@ function check(label: string, ok: boolean, detail = '') {
   console.log(`  ${ok ? '\x1b[32m✔\x1b[0m' : '\x1b[31m✘\x1b[0m'} ${label}${detail ? `  ${detail}` : ''}`);
 }
 
-console.log('\n\x1b[1m█ nibble — smoke test\x1b[0m\n');
+console.log('\n\x1b[1m█ nibble - smoke test\x1b[0m\n');
 
 // ── schema ───────────────────────────────────────────────────────────────
 console.log('schema');

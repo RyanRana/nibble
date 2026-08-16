@@ -1,5 +1,5 @@
 /**
- * CASE 12 — tool-latency percentiles.
+ * CASE 12 - tool-latency percentiles.
  *
  * A t-digest allocates at CREATE and never grows, so it only beats TimeSeries
  * above ~4,700 samples/series. And agent traffic is bimodal: a 0.5% timeout
@@ -18,7 +18,7 @@ const STEP_MS = 1_000;
 const SEED = 606011;
 
 /**
- * Lognormal tool latency — the distribution real RPC/LLM calls actually have.
+ * Lognormal tool latency - the distribution real RPC/LLM calls actually have.
  * A normal distribution would flatter every sketch; a uniform one would flatter
  * none of them.
  */
@@ -41,7 +41,7 @@ function makeLatencies(seed: number, timeoutFraction: number): number[][] {
 const CLEAN = makeLatencies(SEED, 0);
 const BIMODAL = makeLatencies(SEED, 0.005); // 0.5% of calls time out
 
-/** Exact percentile from the raw samples — the ground truth every row is scored against. */
+/** Exact percentile from the raw samples - the ground truth every row is scored against. */
 function exactQuantile(sorted: number[], q: number): number {
   const i = Math.min(sorted.length - 1, Math.floor(q * sorted.length));
   return sorted[i];
@@ -87,7 +87,7 @@ function loadDigests(data: number[][], compression: number, keyOf: (s: number) =
     );
     for (let s = 0; s < SERIES; s++) {
       const cmds: (string | number)[][] = [];
-      // batch at 500 values per ADD — larger batches are rejected in Lua and
+      // batch at 500 values per ADD - larger batches are rejected in Lua and
       // slow here for no benefit
       for (let i = 0; i < SAMPLES; i += 500) {
         cmds.push(['TDIGEST.ADD', keyOf(s), ...data[s].slice(i, i + 500).map(String)]);
@@ -163,7 +163,7 @@ export const case12: BenchCase = {
       probe: async (r) => ({
         ...(await digestError(r, k, SORTED_CLEAN)),
         'bytes/series': 9_864,
-        'exact?': 'no — and it has no proven error bound',
+        'exact?': 'no - and it has no proven error bound',
       }),
     },
     {
@@ -174,7 +174,7 @@ export const case12: BenchCase = {
     },
     {
       name: 'E · T-DIGEST, compression 500',
-      note: 'Diminishing returns on clean data — but see variant G for where it earns its keep.',
+      note: 'Diminishing returns on clean data - but see variant G for where it earns its keep.',
       load: loadDigests(CLEAN, 500, k),
       probe: async (r) => ({ ...(await digestError(r, k, SORTED_CLEAN)), 'bytes/series': 48_264 }),
     },
@@ -204,7 +204,7 @@ export const case12: BenchCase = {
     {
       name: 'G · T-DIGEST c=100, BIMODAL (0.5% timeouts)',
       note: 'Identical sketch, realistic agent data: a body of normal latencies plus calls that hit the 30 s timeout.',
-      caveat: 'different input data — compare its error to C, not its size',
+      caveat: 'different input data - compare its error to C, not its size',
       load: loadDigests(BIMODAL, 100, k),
       probe: async (r) => ({
         ...(await digestError(r, k, SORTED_BIMODAL)),
@@ -214,7 +214,7 @@ export const case12: BenchCase = {
     {
       name: 'H · BIMODAL, timeouts excluded + exact counter',
       note: 'The fix: digest only completed calls, count timeouts exactly. Both answers get better, and the count is exact.',
-      caveat: 'different input data — compare its error to G',
+      caveat: 'different input data - compare its error to G',
       load: async (r: Redis) => {
         await pipe(
           r,
